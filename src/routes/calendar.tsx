@@ -1,0 +1,262 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, type DayLog, type DayTask } from "@/lib/db";
+import { dateKey } from "@/lib/dateKeys";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  format,
+  isSameMonth,
+  addMonths,
+  subMonths,
+} from "date-fns";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+
+export const Route = createFileRoute("/calendar")({
+  head: () => ({
+    meta: [
+      { title: "Calendar — Hunter System" },
+      {
+        name: "description",
+        content: "Visualize daily performance with a neon Hunter heatmap.",
+      },
+      { property: "og:title", content: "Hunter Calendar" },
+      {
+        property: "og:description",
+        content: "Monthly heatmap of perfect, partial and failed days.",
+      },
+    ],
+  }),
+  component: CalendarPage,
+});
+
+const STATUS_COLOR: Record<string, string> = {
+  perfect: "var(--neon-emerald)",
+  partial: "var(--neon-amber)",
+  failed: "var(--neon-magenta)",
+  "in-progress": "var(--neon-cyan)",
+};
+
+function CalendarPage() {
+  const [month, setMonth] = useState(new Date());
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 });
+  const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 });
+  const days: Date[] = [];
+  for (let d = start; d <= end; d = addDays(d, 1)) days.push(d);
+
+  const logs = useLiveQuery(
+    () =>
+      db.dayLogs
+        .where("dateKey")
+        .between(format(start, "yyyy-MM-dd"), format(end, "yyyy-MM-dd"), true, true)
+        .toArray(),
+    [month.getMonth(), month.getFullYear()],
+  ) as DayLog[] | undefined;
+
+  const logMap = new Map((logs ?? []).map((l) => [l.dateKey, l]));
+
+  const detailLog = selected ? logMap.get(selected) : undefined;
+  const detailTasks = useLiveQuery(
+    () =>
+      selected
+        ? db.dayTasks.where("dateKey").equals(selected).toArray()
+        : Promise.resolve([] as DayTask[]),
+    [selected],
+  ) as DayTask[] | undefined;
+
+  const today = dateKey();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-1 pt-2">
+        <div>
+          <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">History</div>
+          <h1 className="text-3xl font-black">{format(month, "MMMM yyyy")}</h1>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setMonth((m) => subMonths(m, 1))}
+            aria-label="Previous month"
+            className="glass flex h-9 w-9 items-center justify-center rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setMonth((m) => addMonths(m, 1))}
+            aria-label="Next month"
+            className="glass flex h-9 w-9 items-center justify-center rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="glass rounded-3xl p-3">
+        <div className="grid grid-cols-7 gap-1 px-1 pb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <div key={d}>{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((d) => {
+            const k = format(d, "yyyy-MM-dd");
+            const log = logMap.get(k);
+            const inMonth = isSameMonth(d, month);
+            const isToday = k === today;
+            return (
+              <button
+                key={k}
+                onClick={() => setSelected(k)}
+                className={`relative flex aspect-square flex-col items-center justify-center rounded-2xl text-xs transition ${
+                  inMonth ? "" : "opacity-30"
+                } ${isToday ? "ring-1 ring-[var(--neon-violet)]" : ""}`}
+                style={{
+                  background: log
+                    ? `color-mix(in oklch, ${STATUS_COLOR[log.status]} 22%, transparent)`
+                    : "rgba(255,255,255,0.03)",
+                }}
+              >
+                <span className="font-semibold tabular-nums">{format(d, "d")}</span>
+                {log && (
+                  <span
+                    className="mt-0.5 h-1 w-1 rounded-full"
+                    style={{ background: STATUS_COLOR[log.status] }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {(["perfect", "partial", "failed", "in-progress"] as const).map((s) => (
+          <span key={s} className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLOR[s] }} />
+            {s.replace("-", " ")}
+          </span>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] flex items-end justify-center"
+          >
+            <div
+              className="absolute inset-0 bg-black/40"
+              style={{ backdropFilter: "blur(12px)" }}
+              onClick={() => setSelected(null)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 280, damping: 30 }}
+              className="glass-strong relative max-h-[70vh] w-full max-w-md overflow-y-auto rounded-t-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            >
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                    {format(new Date(selected), "EEEE")}
+                  </div>
+                  <h3 className="text-lg font-bold">
+                    {format(new Date(selected), "MMMM d, yyyy")}
+                  </h3>
+                </div>
+                <button onClick={() => setSelected(null)} aria-label="Close">
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {detailLog && (
+                <div className="mb-3 grid grid-cols-3 gap-2 text-center">
+                  <DetailStat label="Done" value={detailLog.completed} color="emerald" />
+                  <DetailStat
+                    label="Missed"
+                    value={detailLog.skipped + detailLog.missed}
+                    color="magenta"
+                  />
+                  <DetailStat label="XP" value={detailLog.xpEarned} color="cyan" />
+                </div>
+              )}
+
+              <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Tasks
+              </h4>
+              {!detailTasks || detailTasks.length === 0 ? (
+                <div className="text-xs text-muted-foreground">No tasks recorded.</div>
+              ) : (
+                <ul className="space-y-2">
+                  {detailTasks.map((t) => (
+                    <li
+                      key={t.id}
+                      className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2"
+                    >
+                      <div>
+                        <div className="text-sm font-medium">{t.title}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {t.time} · {t.difficulty}
+                        </div>
+                      </div>
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                        style={{
+                          color:
+                            t.status === "completed"
+                              ? "var(--neon-emerald)"
+                              : t.status === "pending"
+                                ? "var(--neon-cyan)"
+                                : "var(--neon-magenta)",
+                          background: "rgba(255,255,255,0.05)",
+                        }}
+                      >
+                        {t.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DetailStat({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: "emerald" | "magenta" | "cyan";
+}) {
+  const c =
+    color === "emerald"
+      ? "var(--neon-emerald)"
+      : color === "magenta"
+        ? "var(--neon-magenta)"
+        : "var(--neon-cyan)";
+  return (
+    <div className="rounded-2xl border border-white/5 bg-white/[0.03] py-2">
+      <div className="text-lg font-bold tabular-nums" style={{ color: c }}>
+        {value}
+      </div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+    </div>
+  );
+}

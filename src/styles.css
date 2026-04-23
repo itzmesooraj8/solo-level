@@ -1,0 +1,213 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Hunter Interface 2026 — Solo Leveling Life System
+ * OLED black base with violet + cyan neon accents.
+ * All colors in oklch.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-neon-violet: var(--neon-violet);
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-magenta: var(--neon-magenta);
+  --color-neon-emerald: var(--neon-emerald);
+  --color-neon-amber: var(--neon-amber);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+}
+
+:root {
+  --radius: 1rem;
+
+  /* Hunter dark default — even :root is dark; we don't ship a light theme. */
+  --background: oklch(0.12 0.02 270);
+  --foreground: oklch(0.97 0.01 250);
+
+  --card: oklch(0.17 0.03 270);
+  --card-foreground: oklch(0.97 0.01 250);
+
+  --popover: oklch(0.15 0.03 270);
+  --popover-foreground: oklch(0.97 0.01 250);
+
+  /* Neon violet primary */
+  --primary: oklch(0.62 0.24 295);
+  --primary-foreground: oklch(0.99 0 0);
+
+  /* Cyan secondary */
+  --secondary: oklch(0.78 0.16 210);
+  --secondary-foreground: oklch(0.12 0.02 270);
+
+  --muted: oklch(0.22 0.03 270);
+  --muted-foreground: oklch(0.7 0.03 260);
+
+  --accent: oklch(0.78 0.16 210);
+  --accent-foreground: oklch(0.12 0.02 270);
+
+  --destructive: oklch(0.65 0.27 18);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.62 0.24 295);
+
+  /* Neon palette */
+  --neon-violet: oklch(0.62 0.24 295);
+  --neon-cyan: oklch(0.82 0.16 210);
+  --neon-magenta: oklch(0.7 0.28 340);
+  --neon-emerald: oklch(0.78 0.2 155);
+  --neon-amber: oklch(0.82 0.18 75);
+
+  /* Glass */
+  --glass: oklch(1 0 0 / 0.04);
+  --glass-strong: oklch(1 0 0 / 0.08);
+
+  /* Gradients */
+  --gradient-aurora:
+    radial-gradient(ellipse 80% 60% at 20% 10%, oklch(0.62 0.24 295 / 0.35), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 90% 30%, oklch(0.78 0.16 210 / 0.28), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, oklch(0.7 0.28 340 / 0.25), transparent 60%);
+  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.24 295), oklch(0.78 0.16 210));
+  --gradient-danger: linear-gradient(135deg, oklch(0.65 0.27 18), oklch(0.7 0.28 340));
+
+  /* Shadows / glow */
+  --shadow-glow-violet: 0 0 40px -8px oklch(0.62 0.24 295 / 0.55);
+  --shadow-glow-cyan: 0 0 40px -8px oklch(0.78 0.16 210 / 0.55);
+  --shadow-glow-magenta: 0 0 40px -8px oklch(0.7 0.28 340 / 0.55);
+  --shadow-card: 0 8px 32px -12px oklch(0 0 0 / 0.6), inset 0 1px 0 0 oklch(1 0 0 / 0.06);
+
+  --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    background-image: var(--gradient-aurora);
+    background-attachment: fixed;
+  }
+
+  /* Hide scrollbars on mobile-feeling surfaces */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .glass {
+    background-color: var(--glass);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+  }
+  .glass-strong {
+    background-color: var(--glass-strong);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+  }
+  .neon-text-violet {
+    color: var(--neon-violet);
+    text-shadow: 0 0 16px oklch(0.62 0.24 295 / 0.6);
+  }
+  .neon-text-cyan {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 16px oklch(0.82 0.16 210 / 0.6);
+  }
+  .neon-border-violet {
+    box-shadow:
+      0 0 0 1px var(--neon-violet),
+      var(--shadow-glow-violet);
+  }
+  .neon-border-cyan {
+    box-shadow:
+      0 0 0 1px var(--neon-cyan),
+      var(--shadow-glow-cyan);
+  }
+}
+
+/* Aurora drift */
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -2%, 0) scale(1.05);
+  }
+}
+.aurora-blob {
+  animation: aurora-drift 18s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.6;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(2px);
+  }
+}
+.pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
