@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useGameStore } from "@/stores/gameStore";
-import { rankTitle, levelProgress, LEVEL_THRESHOLDS } from "@/lib/leveling";
+import { rankTitle, LEVEL_THRESHOLDS } from "@/lib/leveling";
 import { motion } from "framer-motion";
 import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
+import { XPBar } from "@/components/XPBar";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -31,7 +32,6 @@ function ProfilePage() {
   const wipeAll = useGameStore((s) => s.wipeAll);
 
   if (!player) return null;
-  const lp = levelProgress(player.xp);
 
   const exportData = async () => {
     const dump = {
@@ -86,43 +86,29 @@ function ProfilePage() {
             </div>
           </div>
         </div>
-
-        {/* Level progress */}
-        <div className="mt-5">
-          <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-            <span>LV {lp.level}</span>
-            <span>{lp.isMax ? "MAX" : `${lp.within}/${lp.span} → LV ${lp.level + 1}`}</span>
-          </div>
-          <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
-            <motion.div
-              className="absolute inset-y-0 left-0 rounded-full"
-              style={{ background: "var(--gradient-primary)" }}
-              animate={{ width: `${lp.pct * 100}%` }}
-              transition={{ type: "spring", stiffness: 80, damping: 20 }}
-            />
-          </div>
-        </div>
       </motion.div>
+
+      <XPBar xp={player.xp} level={player.level} compact />
 
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
-          icon={<Trophy className="h-5 w-5 text-[var(--neon-cyan)]" />}
+          icon={<Trophy className="h-5 w-5 text-neon-cyan" />}
           label="Best streak"
           value={player.bestStreak}
         />
         <StatCard
-          icon={<Flame className="h-5 w-5 text-[var(--neon-amber)]" />}
+          icon={<Flame className="h-5 w-5 text-neon-amber" />}
           label="Current streak"
           value={player.currentStreak}
         />
         <StatCard
-          icon={<Target className="h-5 w-5 text-[var(--neon-emerald)]" />}
+          icon={<Target className="h-5 w-5 text-neon-emerald" />}
           label="Completed"
           value={player.tasksCompleted}
         />
         <StatCard
-          icon={<X className="h-5 w-5 text-[var(--neon-magenta)]" />}
+          icon={<X className="h-5 w-5 text-neon-magenta" />}
           label="Missed"
           value={player.tasksMissed}
         />
@@ -132,7 +118,7 @@ function ProfilePage() {
       <div className="glass rounded-3xl p-4">
         <div className="flex items-center gap-3">
           <Shield
-            className={`h-6 w-6 ${player.mode === "strict" ? "text-[var(--neon-magenta)]" : "text-[var(--neon-cyan)]"}`}
+            className={`h-6 w-6 ${player.mode === "strict" ? "text-neon-magenta" : "text-neon-cyan"}`}
           />
           <div className="flex-1">
             <div className="text-sm font-bold">
@@ -191,13 +177,13 @@ function ProfilePage() {
         <div className="flex flex-col gap-2">
           <button
             onClick={exportData}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm font-medium"
           >
             <Download className="h-4 w-4" /> Export local data
           </button>
           <button
             onClick={wipe}
-            className="flex items-center gap-2 rounded-xl border border-[var(--neon-magenta)]/30 bg-[var(--neon-magenta)]/10 px-3 py-2 text-sm font-medium text-[var(--neon-magenta)]"
+            className="flex items-center gap-2 rounded-xl border border-(--neon-magenta)/30 bg-(--neon-magenta)/10 px-3 py-2 text-sm font-medium text-neon-magenta"
           >
             <Trash2 className="h-4 w-4" /> Wipe everything
           </button>
@@ -212,7 +198,7 @@ function ProfilePage() {
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="glass flex items-center gap-3 rounded-2xl p-3">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/[0.04]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/4">
         {icon}
       </div>
       <div>

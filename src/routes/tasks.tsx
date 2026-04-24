@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Task } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
-import { Plus, Pencil, Lock } from "lucide-react";
+import { Plus, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { isDayLocked } from "@/lib/engine";
 import { dateKey } from "@/lib/dateKeys";
+import { TaskCard } from "@/components/TaskCard";
 
 export const Route = createFileRoute("/tasks")({
   head: () => ({
@@ -24,12 +25,6 @@ export const Route = createFileRoute("/tasks")({
   }),
   component: TasksPage,
 });
-
-const DIFF_COLOR: Record<string, string> = {
-  easy: "var(--neon-emerald)",
-  medium: "var(--neon-cyan)",
-  hard: "var(--neon-magenta)",
-};
 
 function TasksPage() {
   const tasks = useLiveQuery(() => db.tasks.orderBy("createdAt").toArray()) as Task[] | undefined;
@@ -65,47 +60,16 @@ function TasksPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((t) => (
-            <motion.button
-              key={t.id}
-              layout
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                if (!todayLocked) openAdd(t);
-              }}
-              disabled={todayLocked}
-              className="glass relative w-full overflow-hidden rounded-3xl p-4 text-left disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <span
-                aria-hidden
-                className="absolute left-0 top-0 h-full w-1"
-                style={{ background: DIFF_COLOR[t.difficulty] }}
+            <motion.div key={t.id} layout>
+              <TaskCard
+                task={t}
+                mode="library"
+                locked={todayLocked}
+                onEdit={() => {
+                  if (!todayLocked) openAdd(t);
+                }}
               />
-              <div className="flex items-start gap-3 pl-2">
-                <div className="flex-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t.time} · {t.durationMin}m · {t.notify}
-                  </div>
-                  <div className="mt-1 text-base font-semibold">{t.title}</div>
-                  {t.promptText && (
-                    <div className="mt-1 text-xs italic text-muted-foreground">
-                      "{t.promptText}"
-                    </div>
-                  )}
-                  <div
-                    className="mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                    style={{
-                      color: DIFF_COLOR[t.difficulty],
-                      background: "rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    {t.difficulty} · +
-                    {t.difficulty === "easy" ? 10 : t.difficulty === "medium" ? 20 : 40} XP
-                    {t.reverse && <span> · reverse</span>}
-                  </div>
-                </div>
-                <Pencil className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </motion.button>
+            </motion.div>
           ))}
         </div>
       )}

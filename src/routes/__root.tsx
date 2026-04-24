@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { DesktopStatusBar } from "@/components/DesktopStatusBar";
-import { TaskPromptOverlay } from "@/components/TaskPromptOverlay";
+import { PopupOverlay } from "@/components/PopupOverlay";
 import { LevelUpOverlay } from "@/components/LevelUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
@@ -191,7 +191,7 @@ function RootComponent() {
           <main
             className={`flex-1 overflow-y-auto px-3 pt-3 ${isMobile ? "pb-32" : "pb-6 md:px-5 lg:px-8"}`}
           >
-            <div className={isMobile ? "" : "mx-auto w-full max-w-[1400px]"}>
+            <div className={isMobile ? "" : "mx-auto w-full max-w-350"}>
               <Outlet />
             </div>
           </main>
@@ -201,7 +201,7 @@ function RootComponent() {
       {isMobile && <BottomNav />}
 
       <XpToast />
-      <TaskPromptOverlay />
+      <PopupOverlay />
       <TaskEditorSheet />
       <LevelUpOverlay />
     </div>

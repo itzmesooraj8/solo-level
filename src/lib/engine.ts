@@ -54,6 +54,7 @@ export async function resolveTask(dt: DayTask, answer: "yes" | "no") {
   const game = useGameStore.getState();
   const player = game.player;
   if (!player) return;
+  if (dt.status !== "pending") return;
 
   // Reverse logic: YES is bad if reverse flag set.
   const positive = dt.reverse ? answer === "no" : answer === "yes";

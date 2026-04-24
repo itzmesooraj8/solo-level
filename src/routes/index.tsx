@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
-import { Plus, Flame, Trophy, Target } from "lucide-react";
+import { Plus, Flame, Trophy, Target, Lock, Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
 import { isDayLocked } from "@/lib/engine";
+import { XPBar } from "@/components/XPBar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,12 +40,26 @@ function Dashboard() {
   const today = dateKey();
   const todayLocked = isDayLocked(today);
   const items = useLiveQuery(() => db.dayTasks.where("dateKey").equals(today).toArray(), [today]);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (!player) return null;
 
   const completed = items?.filter((i) => i.status === "completed").length ?? 0;
   const total = items?.length ?? 0;
   const dayPct = total > 0 ? completed / total : 0;
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  const lockMinutes = Math.max(0, Math.floor((midnight.getTime() - now) / 60_000));
+  const lockLabel = todayLocked
+    ? "Tasks are locked until tomorrow"
+    : lockMinutes < 60
+      ? `Tasks lock in ${lockMinutes}m`
+      : `Tasks lock in ${Math.floor(lockMinutes / 60)}h ${lockMinutes % 60}m`;
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)] lg:gap-4 lg:space-y-0">
@@ -60,7 +76,13 @@ function Dashboard() {
           <h1 className="mt-1 text-3xl font-black leading-tight">
             Welcome back, <span className="neon-text-violet">Hunter</span>
           </h1>
+          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-neon-cyan" />
+            {lockLabel}
+          </div>
         </motion.div>
+
+        <XPBar xp={player.xp} level={player.level} />
 
         {/* Today's list */}
         <div className="space-y-2">
@@ -84,7 +106,7 @@ function Dashboard() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Today's gate
             </div>
-            <Target className="h-4 w-4 text-[var(--neon-cyan)]" />
+            <Target className="h-4 w-4 text-neon-cyan" />
           </div>
           <div className="my-2">
             <div className="text-4xl font-black tabular-nums">
@@ -101,6 +123,10 @@ function Dashboard() {
               transition={{ type: "spring", stiffness: 80, damping: 20 }}
             />
           </div>
+          <div className="mt-3 flex items-center gap-2 rounded-2xl border border-white/5 bg-white/3 px-3 py-2 text-xs text-muted-foreground">
+            <Lock className="h-3.5 w-3.5 text-neon-amber" />
+            {lockLabel}
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -112,7 +138,7 @@ function Dashboard() {
             className="glass flex flex-col items-center justify-center rounded-3xl p-3"
           >
             <Flame
-              className={`h-8 w-8 ${player.currentStreak > 0 ? "text-[var(--neon-amber)] pulse-glow" : "text-muted-foreground"}`}
+              className={`h-8 w-8 ${player.currentStreak > 0 ? "text-neon-amber pulse-glow" : "text-muted-foreground"}`}
             />
             <div className="mt-1 text-2xl font-black tabular-nums">{player.currentStreak}</div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">streak</div>
@@ -125,7 +151,7 @@ function Dashboard() {
             transition={{ delay: 0.1 }}
             className="glass flex flex-col items-center justify-center rounded-3xl p-3"
           >
-            <Trophy className="h-8 w-8 text-[var(--neon-cyan)]" />
+            <Trophy className="h-8 w-8 text-neon-cyan" />
             <div className="mt-1 text-2xl font-black tabular-nums">{player.bestStreak}</div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">best</div>
           </motion.div>

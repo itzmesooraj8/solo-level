@@ -1,16 +1,12 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { db, type DayTask } from "@/lib/db";
 import { dateKey } from "@/lib/dateKeys";
 import { useLiveQuery } from "dexie-react-hooks";
 import { resolveTask } from "@/lib/engine";
-import { Check, X, Lock, Clock } from "lucide-react";
-
-const DIFFICULTY_COLOR: Record<string, string> = {
-  easy: "var(--neon-emerald)",
-  medium: "var(--neon-cyan)",
-  hard: "var(--neon-magenta)",
-};
+import { Lock } from "lucide-react";
+import { TaskCard } from "@/components/TaskCard";
+import { usePromptStore } from "@/stores/promptStore";
 
 function timeUntil(time: string) {
   const [h, m] = time.split(":").map(Number);
@@ -32,6 +28,7 @@ export function TodayList() {
     () => db.dayTasks.where("dateKey").equals(today).sortBy("time"),
     [today],
   ) as DayTask[] | undefined;
+  const openAdd = usePromptStore((s) => s.openAdd);
 
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -45,12 +42,22 @@ export function TodayList() {
 
   if (items.length === 0) {
     return (
-      <div className="glass rounded-3xl p-8 text-center">
-        <div className="mb-2 text-3xl">⚔️</div>
-        <div className="text-sm font-semibold">No quests today, Hunter.</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          Tap the + button to forge your first task.
+      <div className="glass-strong rounded-[2rem] p-6 text-center">
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/3 text-3xl">
+          ⚔️
         </div>
+        <div className="text-base font-bold">No quests today, Hunter.</div>
+        <div className="mt-1 text-sm text-muted-foreground">
+          Forge a task to keep the streak pressure alive.
+        </div>
+        <button
+          type="button"
+          onClick={openAdd}
+          className="mt-4 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-background"
+          style={{ background: "var(--gradient-primary)" }}
+        >
+          Create first quest
+        </button>
       </div>
     );
   }
@@ -65,73 +72,17 @@ export function TodayList() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className="glass relative overflow-hidden rounded-3xl p-4"
           >
-            <span
-              aria-hidden
-              className="absolute left-0 top-0 h-full w-1"
-              style={{ background: DIFFICULTY_COLOR[dt.difficulty] }}
+            <TaskCard
+              task={dt}
+              mode="today"
+              relativeTime={timeUntil(dt.time)}
+              onComplete={() => resolveTask(dt, "yes")}
+              onSkip={() => resolveTask(dt, "no")}
             />
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1 pl-2">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {dt.time} · {timeUntil(dt.time)}
-                  {dt.notify === "off" && <span>· silent</span>}
-                </div>
-                <div className="mt-1 truncate text-base font-semibold">{dt.title}</div>
-                <div
-                  className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  style={{
-                    color: DIFFICULTY_COLOR[dt.difficulty],
-                    background: "rgba(255,255,255,0.05)",
-                  }}
-                >
-                  {dt.difficulty} · +
-                  {dt.difficulty === "easy" ? 10 : dt.difficulty === "medium" ? 20 : 40} XP
-                </div>
-              </div>
-              <StatusOrActions dt={dt} />
-            </div>
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function StatusOrActions({ dt }: { dt: DayTask }) {
-  if (dt.status === "completed") {
-    return (
-      <span className="flex items-center gap-1 rounded-full bg-[var(--neon-emerald)]/20 px-2 py-1 text-[10px] font-bold text-[var(--neon-emerald)]">
-        <Check className="h-3 w-3" /> Done
-      </span>
-    );
-  }
-  if (dt.status === "skipped" || dt.status === "missed") {
-    return (
-      <span className="flex items-center gap-1 rounded-full bg-[var(--neon-magenta)]/20 px-2 py-1 text-[10px] font-bold text-[var(--neon-magenta)]">
-        <X className="h-3 w-3" /> {dt.status}
-      </span>
-    );
-  }
-  return (
-    <div className="flex flex-shrink-0 gap-1.5">
-      <button
-        aria-label="Complete"
-        onClick={() => resolveTask(dt, "yes")}
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-background transition active:scale-90"
-        style={{ background: "var(--gradient-primary)" }}
-      >
-        <Check className="h-4 w-4" strokeWidth={3} />
-      </button>
-      <button
-        aria-label="Skip"
-        onClick={() => resolveTask(dt, "no")}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-foreground transition active:scale-90"
-      >
-        <X className="h-4 w-4" />
-      </button>
     </div>
   );
 }
