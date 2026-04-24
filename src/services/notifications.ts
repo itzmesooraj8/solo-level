@@ -7,12 +7,20 @@
 
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import type { ActionPerformed } from "@capacitor/local-notifications";
+import type { NotifyMode } from "@/lib/db";
 
 export type NotifyPayload = {
   id: string;
   title: string;
   body?: string;
   silent?: boolean;
+};
+
+export type ScheduledTaskNotification = {
+  id: string;
+  title: string;
+  time: string;
+  notify: NotifyMode;
 };
 
 export type NotifyAction = "yes" | "no";
@@ -117,6 +125,47 @@ export const notifications = {
       void instance;
     } catch {
       // ignore
+    }
+  },
+
+  async cancelTask(id: string) {
+    if (!isNativePlatform()) return;
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+    await LocalNotifications.cancel({ notifications: [{ id: hashId(id) }] });
+  },
+
+  async scheduleDayTasks(tasks: ScheduledTaskNotification[]) {
+    if (!isNativePlatform()) return;
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+    await ensureNativeActions();
+
+    const pending = await LocalNotifications.getPending();
+    if (pending.notifications.length > 0) {
+      await LocalNotifications.cancel({ notifications: pending.notifications });
+    }
+
+    const now = new Date();
+    const notificationsToSchedule = tasks
+      .filter((task) => task.notify !== "off")
+      .map((task) => {
+        const [hours, minutes] = task.time.split(":").map(Number);
+        const at = new Date();
+        at.setHours(hours, minutes, 0, 0);
+        if (at <= now) return null;
+        return {
+          id: hashId(task.id),
+          title: task.title,
+          body: "Tap to respond — YES / NO",
+          schedule: { at, allowWhileIdle: true },
+          actionTypeId: ACTION_TYPE_ID,
+          extra: { taskId: task.id },
+          sound: task.notify === "strict" ? "default" : undefined,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    if (notificationsToSchedule.length > 0) {
+      await LocalNotifications.schedule({ notifications: notificationsToSchedule });
     }
   },
 

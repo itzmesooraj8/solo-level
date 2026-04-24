@@ -7,6 +7,8 @@ import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
 
+const resolving = new Set<string>();
+
 export function dayTaskId(dKey: string, taskId: string) {
   return `${dKey}-${taskId}`;
 }
@@ -40,6 +42,16 @@ export async function materializeToday() {
     };
     await db.dayTasks.put(dt);
   }
+
+  const pending = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  await notifications.scheduleDayTasks(
+    pending.map((dt) => ({
+      id: dt.id,
+      title: dt.promptText ?? dt.title,
+      time: dt.time,
+      notify: dt.notify,
+    })),
+  );
 }
 
 function penaltyFor(mode: "strict" | "flex") {
@@ -55,28 +67,36 @@ export async function resolveTask(dt: DayTask, answer: "yes" | "no") {
   const player = game.player;
   if (!player) return;
   if (dt.status !== "pending") return;
+  if (resolving.has(dt.id)) return;
+  resolving.add(dt.id);
 
-  // Reverse logic: YES is bad if reverse flag set.
-  const positive = dt.reverse ? answer === "no" : answer === "yes";
+  try {
+    // Reverse logic: YES is bad if reverse flag set.
+    const positive = dt.reverse ? answer === "no" : answer === "yes";
 
-  let xpDelta = 0;
-  let status: DayTask["status"];
-  if (positive) {
-    xpDelta = DIFFICULTY_XP[dt.difficulty];
-    status = "completed";
-    await game.bumpCompleted();
-    notifications.vibrate(20);
-  } else {
-    xpDelta = penaltyFor(player.mode);
-    status = "skipped";
-    await game.bumpMissed();
-    notifications.vibrate([20, 60, 20]);
+    let xpDelta = 0;
+    let status: DayTask["status"];
+    if (positive) {
+      xpDelta = DIFFICULTY_XP[dt.difficulty];
+      status = "completed";
+      await game.bumpCompleted();
+      notifications.vibrate(20);
+    } else {
+      xpDelta = penaltyFor(player.mode);
+      status = "skipped";
+      await game.bumpMissed();
+      notifications.vibrate([20, 60, 20]);
+    }
+
+    const updated: DayTask = { ...dt, status, xpDelta, resolvedAt: Date.now() };
+    await db.dayTasks.put(updated);
+    await notifications.cancelTask(dt.id);
+    await db.promptFires.delete(dt.id);
+    await game.applyXp(xpDelta);
+    await refreshDayLog(dt.dateKey);
+  } finally {
+    resolving.delete(dt.id);
   }
-
-  const updated: DayTask = { ...dt, status, xpDelta, resolvedAt: Date.now() };
-  await db.dayTasks.put(updated);
-  await game.applyXp(xpDelta);
-  await refreshDayLog(dt.dateKey);
 }
 
 export async function refreshDayLog(dKey: string): Promise<DayLog> {
@@ -163,6 +183,19 @@ let tickHandle: ReturnType<typeof setInterval> | null = null;
 const fired = new Set<string>();
 let schedulerDay = dateKey();
 
+async function rememberFired(taskId: string, today: string) {
+  await db.promptFires.put({ id: taskId, dateKey: today, firedAt: Date.now() });
+  fired.add(taskId);
+}
+
+async function clearStalePromptFires(today: string) {
+  const all = await db.promptFires.toArray();
+  const stale = all.filter((item) => item.dateKey !== today);
+  for (const item of stale) {
+    await db.promptFires.delete(item.id);
+  }
+}
+
 /** Start the foreground scheduler. Checks every 15s for due tasks. */
 export function startScheduler() {
   if (tickHandle) return;
@@ -171,6 +204,7 @@ export function startScheduler() {
     if (today !== schedulerDay) {
       schedulerDay = today;
       fired.clear();
+      await clearStalePromptFires(today);
       await evaluatePastDays();
       await materializeToday();
     }
@@ -183,8 +217,9 @@ export function startScheduler() {
     for (const dt of items) {
       if (dt.status !== "pending") continue;
       if (dt.time > nowKey) continue;
-      if (fired.has(dt.id)) continue;
-      fired.add(dt.id);
+      const persisted = await db.promptFires.get(dt.id);
+      if (persisted?.dateKey === today || fired.has(dt.id)) continue;
+      await rememberFired(dt.id, today);
       if (dt.notify !== "off") {
         notifications.fire({
           id: dt.id,
@@ -237,6 +272,16 @@ export async function upsertTask(t: Task) {
       reverse: t.reverse,
     });
   }
+
+  const pending = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  await notifications.scheduleDayTasks(
+    pending.map((dt) => ({
+      id: dt.id,
+      title: dt.promptText ?? dt.title,
+      time: dt.time,
+      notify: dt.notify,
+    })),
+  );
 }
 
 export async function deleteTask(id: string) {
@@ -249,4 +294,16 @@ export async function deleteTask(id: string) {
   if (existing && existing.status === "pending") {
     await db.dayTasks.delete(dtId);
   }
+
+  await db.promptFires.delete(dtId);
+
+  const remaining = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  await notifications.scheduleDayTasks(
+    remaining.map((dt) => ({
+      id: dt.id,
+      title: dt.promptText ?? dt.title,
+      time: dt.time,
+      notify: dt.notify,
+    })),
+  );
 }

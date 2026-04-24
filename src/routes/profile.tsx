@@ -40,6 +40,7 @@ function ProfilePage() {
       dayTasks: await db.dayTasks.toArray(),
       dayLogs: await db.dayLogs.toArray(),
       weeklyQuests: await db.weeklyQuests.toArray(),
+      promptFires: await db.promptFires.toArray(),
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });

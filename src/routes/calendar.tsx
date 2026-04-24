@@ -20,9 +20,5 @@ export const Route = createFileRoute("/calendar")({
 });
 
 function CalendarPage() {
-  component: CalendarPage,
-});
-
-function CalendarPage() {
   return <CalendarGrid />;
 }

@@ -11,6 +11,7 @@ import { PopupOverlay } from "@/components/PopupOverlay";
 import { LevelUpOverlay } from "@/components/LevelUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
+import { StreakBrokenOverlay } from "@/components/StreakBrokenOverlay";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameStore } from "@/stores/gameStore";
 import {
@@ -204,6 +205,7 @@ function RootComponent() {
       <PopupOverlay />
       <TaskEditorSheet />
       <LevelUpOverlay />
+      <StreakBrokenOverlay />
     </div>
   );
 }

@@ -6,6 +6,7 @@ interface GameState {
   player: PlayerStats | null;
   loading: boolean;
   pendingLevelUp: { from: number; to: number } | null;
+  pendingStreakBreak: { from: number; to: number } | null;
   recentXp: { amount: number; key: number } | null;
 
   load: () => Promise<void>;
@@ -16,6 +17,7 @@ interface GameState {
   setStreak: (current: number, best?: number) => Promise<void>;
   setLastEvaluatedDay: (key: string) => Promise<void>;
   clearLevelUp: () => void;
+  clearStreakBreak: () => void;
   wipeAll: () => Promise<void>;
 }
 
@@ -27,6 +29,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   player: null,
   loading: true,
   pendingLevelUp: null,
+  pendingStreakBreak: null,
   recentXp: null,
 
   load: async () => {
@@ -79,7 +82,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newBest = Math.max(p.bestStreak, best ?? current);
     const next = { ...p, currentStreak: current, bestStreak: newBest };
     await persist(next);
-    set({ player: next });
+    set({
+      player: next,
+      pendingStreakBreak: p.currentStreak > 0 && current === 0 ? { from: p.currentStreak, to: current } : get().pendingStreakBreak,
+    });
   },
 
   setLastEvaluatedDay: async (key) => {
@@ -91,6 +97,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   clearLevelUp: () => set({ pendingLevelUp: null }),
+  clearStreakBreak: () => set({ pendingStreakBreak: null }),
 
   wipeAll: async () => {
     await Promise.all([
@@ -98,9 +105,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       db.dayTasks.clear(),
       db.dayLogs.clear(),
       db.weeklyQuests.clear(),
+      db.promptFires.clear(),
       db.player.clear(),
     ]);
     const fresh = await getOrInitPlayer();
-    set({ player: fresh, pendingLevelUp: null, recentXp: null });
+    set({ player: fresh, pendingLevelUp: null, pendingStreakBreak: null, recentXp: null });
   },
 }));
