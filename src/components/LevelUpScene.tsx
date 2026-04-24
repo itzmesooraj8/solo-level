@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Stars } from "@react-three/drei";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 function Sigil({ level }: { level: number }) {
@@ -79,8 +79,18 @@ function Particles({ count, level }: { count: number; level: number }) {
 }
 
 export default function LevelUpScene({ level }: { level: number }) {
+  const eventSource = useMemo(
+    () => (typeof window !== "undefined" ? window.document.body : undefined),
+    [],
+  );
+
   return (
-    <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 2]}>
+    <Canvas
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      dpr={[1, 2]}
+      eventSource={eventSource}
+      className="pointer-events-none"
+    >
       <color attach="background" args={["#08070d"]} />
       <ambientLight intensity={0.3} />
       <Stars radius={20} depth={20} count={400} factor={2} fade speed={1} />

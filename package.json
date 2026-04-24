@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android",
-    "build:android": "npm run build && npm run cap:sync"
+    "build:capacitor:web": "npm run build && node scripts/generate-capacitor-index.mjs",
+    "build:android": "npm run build:capacitor:web && npm run cap:sync"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
@@ -99,6 +100,7 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
+import { InstallSystemCard } from "@/components/InstallSystemCard";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -202,6 +203,8 @@ function ProfilePage() {
           </button>
         </div>
       </div>
+
+      <InstallSystemCard />
     </div>
   );
 }

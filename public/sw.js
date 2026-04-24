@@ -1,5 +1,9 @@
 const CACHE_NAME = "hunter-shell-v1";
-const SHELL_ASSETS = ["/", "/manifest.webmanifest", "/icons/hunter-icon.svg"];
+const injectedManifest = self.__WB_MANIFEST || [];
+const injectedUrls = injectedManifest.map((entry) => entry.url);
+const SHELL_ASSETS = Array.from(
+  new Set(["/", "/manifest.webmanifest", "/icons/hunter-icon.svg", ...injectedUrls]),
+);
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

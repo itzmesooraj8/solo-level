@@ -50,6 +50,7 @@ export function TaskEditorSheet() {
   }, [editing, open]);
 
   const save = async () => {
+    if (todayLocked) return;
     if (!title.trim()) return;
     const t: Task = {
       id: editing?.id ?? uid(),
@@ -67,6 +68,7 @@ export function TaskEditorSheet() {
   };
 
   const remove = async () => {
+    if (todayLocked) return;
     if (!editing) return;
     await deleteTask(editing.id);
     close();
@@ -104,7 +106,7 @@ export function TaskEditorSheet() {
             <div className="space-y-3">
               {todayLocked && (
                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted-foreground">
-                  Day timeline is locked. Changes saved here apply from tomorrow.
+                  Day timeline is locked. Task library is read-only until tomorrow.
                 </div>
               )}
 
@@ -115,6 +117,7 @@ export function TaskEditorSheet() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Morning workout"
+                  disabled={todayLocked}
                   autoFocus
                 />
               </div>
@@ -127,6 +130,7 @@ export function TaskEditorSheet() {
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
+                    disabled={todayLocked}
                   />
                 </div>
                 <div>
@@ -138,6 +142,7 @@ export function TaskEditorSheet() {
                     max={480}
                     value={duration}
                     onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
+                    disabled={todayLocked}
                   />
                 </div>
               </div>
@@ -149,11 +154,12 @@ export function TaskEditorSheet() {
                     <button
                       key={d}
                       onClick={() => setDifficulty(d)}
+                      disabled={todayLocked}
                       className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                         difficulty === d
                           ? "border-transparent text-background"
                           : "border-white/10 text-muted-foreground"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                       style={
                         difficulty === d
                           ? {
@@ -180,11 +186,12 @@ export function TaskEditorSheet() {
                     <button
                       key={m}
                       onClick={() => setNotify(m)}
+                      disabled={todayLocked}
                       className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                         notify === m
                           ? "border-primary bg-primary/20 text-foreground"
                           : "border-white/10 text-muted-foreground"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       {m}
                     </button>
@@ -199,6 +206,7 @@ export function TaskEditorSheet() {
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
                   placeholder='e.g. "Did you eat junk food?"'
+                  disabled={todayLocked}
                 />
               </div>
 
@@ -207,7 +215,7 @@ export function TaskEditorSheet() {
                   <div className="font-medium">Reverse logic</div>
                   <div className="text-muted-foreground">YES becomes the penalty</div>
                 </div>
-                <Switch checked={reverse} onCheckedChange={setReverse} />
+                <Switch checked={reverse} onCheckedChange={setReverse} disabled={todayLocked} />
               </div>
 
               <div className="flex items-center gap-2 pt-2">
@@ -216,6 +224,7 @@ export function TaskEditorSheet() {
                     variant="ghost"
                     size="icon"
                     onClick={remove}
+                    disabled={todayLocked}
                     className="text-[var(--neon-magenta)]"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -223,16 +232,11 @@ export function TaskEditorSheet() {
                 )}
                 <Button
                   onClick={save}
+                  disabled={todayLocked}
                   className="flex-1 rounded-xl"
                   style={{ background: "var(--gradient-primary)", color: "var(--background)" }}
                 >
-                  {editing
-                    ? todayLocked
-                      ? "Save for tomorrow"
-                      : "Save changes"
-                    : todayLocked
-                      ? "Create for tomorrow"
-                      : "Create task"}
+                  {todayLocked ? "Locked until tomorrow" : editing ? "Save changes" : "Create task"}
                 </Button>
               </div>
             </div>

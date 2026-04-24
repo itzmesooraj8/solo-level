@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "app.hunter.system",
   appName: "Hunter System",
-  webDir: "dist",
+  webDir: "dist/client",
   backgroundColor: "#0a0a0a",
   android: {
     allowMixedContent: false,

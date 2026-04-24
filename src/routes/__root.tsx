@@ -1,13 +1,17 @@
 import { useEffect } from "react";
 import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 
 import appCss from "../styles.css?url";
 import { BottomNav } from "@/components/BottomNav";
 import { DynamicIsland } from "@/components/DynamicIsland";
+import { DesktopSidebar } from "@/components/DesktopSidebar";
+import { DesktopStatusBar } from "@/components/DesktopStatusBar";
 import { TaskPromptOverlay } from "@/components/TaskPromptOverlay";
 import { LevelUpOverlay } from "@/components/LevelUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameStore } from "@/stores/gameStore";
 import {
   evaluatePastDays,
@@ -98,6 +102,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const load = useGameStore((s) => s.load);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let mounted = true;
@@ -124,30 +129,27 @@ function RootComponent() {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       }
 
-      if (typeof window !== "undefined") {
-        const { Capacitor } = await import("@capacitor/core");
-        if (Capacitor.getPlatform() !== "web") {
-          const { App } = await import("@capacitor/app");
-          const backButtonHandle = await App.addListener("backButton", ({ canGoBack }) => {
-            const prompt = usePromptStore.getState();
-            if (prompt.active) {
-              prompt.dismiss();
-              return;
-            }
-            if (prompt.addOpen) {
-              prompt.closeAdd();
-              return;
-            }
-            if (canGoBack) {
-              window.history.back();
-              return;
-            }
-            App.exitApp();
-          });
-          removeBackButton = () => {
-            void backButtonHandle.remove();
-          };
-        }
+      if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+        const { App } = await import("@capacitor/app");
+        const backButtonHandle = await App.addListener("backButton", ({ canGoBack }) => {
+          const prompt = usePromptStore.getState();
+          if (prompt.active) {
+            prompt.dismiss();
+            return;
+          }
+          if (prompt.addOpen) {
+            prompt.closeAdd();
+            return;
+          }
+          if (canGoBack) {
+            window.history.back();
+            return;
+          }
+          App.exitApp();
+        });
+        removeBackButton = () => {
+          void backButtonHandle.remove();
+        };
       }
 
       // Soft permission ask, non-blocking.
@@ -163,7 +165,7 @@ function RootComponent() {
   }, [load]);
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-xl flex-col">
+    <div className="relative h-screen w-full overflow-hidden">
       {/* Aurora blobs */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div
@@ -180,11 +182,23 @@ function RootComponent() {
         />
       </div>
 
-      <DynamicIsland />
-      <main className="flex-1 px-3 pb-32 pt-3">
-        <Outlet />
-      </main>
-      <BottomNav />
+      <div className="relative flex h-full w-full overflow-hidden">
+        {!isMobile && <DesktopSidebar />}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {isMobile ? <DynamicIsland /> : <DesktopStatusBar />}
+
+          <main
+            className={`flex-1 overflow-y-auto px-3 pt-3 ${isMobile ? "pb-32" : "pb-6 md:px-5 lg:px-8"}`}
+          >
+            <div className={isMobile ? "" : "mx-auto w-full max-w-[1400px]"}>
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </div>
+
+      {isMobile && <BottomNav />}
 
       <XpToast />
       <TaskPromptOverlay />

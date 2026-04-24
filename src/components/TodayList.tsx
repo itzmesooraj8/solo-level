@@ -56,12 +56,11 @@ export function TodayList() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
       <AnimatePresence initial={false}>
         {items.map((dt) => (
           <motion.div
             key={dt.id}
-            layout
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96 }}

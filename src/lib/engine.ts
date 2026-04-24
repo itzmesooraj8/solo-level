@@ -205,14 +205,13 @@ export function stopScheduler() {
 }
 
 export async function upsertTask(t: Task) {
-  await db.tasks.put(t);
-  // Respect day lock: task template edits after day start apply from tomorrow.
   const today = dateKey();
-  const todayLocked = isDayLocked(today);
+  if (isDayLocked(today)) return;
+
+  await db.tasks.put(t);
   const id = dayTaskId(today, t.id);
   const existing = await db.dayTasks.get(id);
   if (!existing) {
-    if (todayLocked) return;
     await db.dayTasks.put({
       id,
       dateKey: today,
@@ -226,7 +225,7 @@ export async function upsertTask(t: Task) {
       status: "pending",
       xpDelta: 0,
     });
-  } else if (existing.status === "pending" && !todayLocked) {
+  } else if (existing.status === "pending") {
     await db.dayTasks.put({
       ...existing,
       title: t.title,
@@ -240,11 +239,13 @@ export async function upsertTask(t: Task) {
 }
 
 export async function deleteTask(id: string) {
-  await db.tasks.delete(id);
   const today = dateKey();
+  if (isDayLocked(today)) return;
+
+  await db.tasks.delete(id);
   const dtId = dayTaskId(today, id);
   const existing = await db.dayTasks.get(dtId);
-  if (existing && existing.status === "pending" && !isDayLocked(today)) {
+  if (existing && existing.status === "pending") {
     await db.dayTasks.delete(dtId);
   }
 }

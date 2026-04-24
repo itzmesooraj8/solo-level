@@ -25,7 +25,7 @@ let nativeActionListener: PluginListenerHandle | null = null;
 let nativeActionsReady = false;
 
 function isNativePlatform() {
-  return Capacitor.getPlatform() !== "web";
+  return Capacitor.isNativePlatform();
 }
 
 function hashId(id: string) {

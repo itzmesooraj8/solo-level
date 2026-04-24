@@ -57,18 +57,23 @@ function TasksPage() {
           <div className="mb-2 text-3xl">📜</div>
           <div className="text-sm font-semibold">No tasks yet.</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Tap + to design your first daily quest.
+            {todayLocked
+              ? "Task library is locked for today. Create tasks before midnight."
+              : "Tap + to design your first daily quest."}
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((t) => (
             <motion.button
               key={t.id}
               layout
               whileTap={{ scale: 0.98 }}
-              onClick={() => openAdd(t)}
-              className="glass relative w-full overflow-hidden rounded-3xl p-4 text-left"
+              onClick={() => {
+                if (!todayLocked) openAdd(t);
+              }}
+              disabled={todayLocked}
+              className="glass relative w-full overflow-hidden rounded-3xl p-4 text-left disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span
                 aria-hidden
@@ -107,8 +112,11 @@ function TasksPage() {
 
       <motion.button
         whileTap={{ scale: 0.92 }}
-        onClick={() => openAdd()}
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-background"
+        onClick={() => {
+          if (!todayLocked) openAdd();
+        }}
+        disabled={todayLocked}
+        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-background disabled:cursor-not-allowed disabled:opacity-50"
         style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow-violet)" }}
         aria-label="Add task"
       >
