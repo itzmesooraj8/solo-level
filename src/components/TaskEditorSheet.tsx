@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, X } from "lucide-react";
+import { Trash2, X, Archive, ArchiveRestore } from "lucide-react";
 import { dateKey } from "@/lib/dateKeys";
 import { isDayLocked } from "@/lib/engine";
 
@@ -28,6 +28,7 @@ export function TaskEditorSheet() {
   const [notify, setNotify] = useState<NotifyMode>("smart");
   const [promptText, setPromptText] = useState("");
   const [reverse, setReverse] = useState(false);
+  const [archived, setArchived] = useState(false);
 
   useEffect(() => {
     if (editing) {
@@ -38,6 +39,7 @@ export function TaskEditorSheet() {
       setNotify(editing.notify);
       setPromptText(editing.promptText ?? "");
       setReverse(!!editing.reverse);
+      setArchived(!!editing.archived);
     } else if (open) {
       setTitle("");
       setTime("08:00");
@@ -46,6 +48,7 @@ export function TaskEditorSheet() {
       setNotify("smart");
       setPromptText("");
       setReverse(false);
+      setArchived(false);
     }
   }, [editing, open]);
 
@@ -61,6 +64,7 @@ export function TaskEditorSheet() {
       notify,
       promptText: promptText.trim() || undefined,
       reverse,
+      archived,
       createdAt: editing?.createdAt ?? Date.now(),
     };
     await upsertTask(t);
@@ -217,6 +221,16 @@ export function TaskEditorSheet() {
                 </div>
                 <Switch checked={reverse} onCheckedChange={setReverse} disabled={todayLocked} />
               </div>
+
+              {editing && (
+                <div className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2">
+                  <div className="text-xs">
+                    <div className="font-medium">Archive task</div>
+                    <div className="text-muted-foreground">Hide from library and active rotation</div>
+                  </div>
+                  <Switch checked={archived} onCheckedChange={setArchived} disabled={todayLocked} />
+                </div>
+              )}
 
               <div className="flex items-center gap-2 pt-2">
                 {editing && (

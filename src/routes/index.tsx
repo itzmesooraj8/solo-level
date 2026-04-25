@@ -5,6 +5,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
 import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X } from "lucide-react";
+import { NotificationPermissionCard } from "@/components/NotificationPermissionCard";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
@@ -108,6 +109,7 @@ function Dashboard() {
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)] lg:gap-4 lg:space-y-0">
       <section className="space-y-4">
+        <NotificationPermissionCard />
         <MissedBanner />
         {/* Greeting */}
         <motion.div

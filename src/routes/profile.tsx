@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useGameStore } from "@/stores/gameStore";
 import { rankTitle, LEVEL_THRESHOLDS } from "@/lib/leveling";
 import { motion } from "framer-motion";
-import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2, Edit2, Check } from "lucide-react";
+import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2, Edit2, Check, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
 import { XPBar } from "@/components/XPBar";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -32,9 +32,11 @@ function ProfilePage() {
   const setMode = useGameStore((s) => s.setMode);
   const wipeAll = useGameStore((s) => s.wipeAll);
   const setHunterName = useGameStore((s) => s.setHunterName);
+  const load = useGameStore((s) => s.load);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(player?.hunterName || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!player) return null;
 
@@ -62,6 +64,49 @@ function ProfilePage() {
     a.download = `hunter-export-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const importData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const dump = JSON.parse(event.target?.result as string);
+        if (confirm("Importing data will OVERWRITE your current progress. Continue?")) {
+          await db.transaction("rw", db.player, db.tasks, db.dayTasks, db.dayLogs, db.weeklyQuests, db.promptFires, async () => {
+            if (dump.player) await db.player.put(dump.player);
+            if (dump.tasks) {
+              await db.tasks.clear();
+              await db.tasks.bulkPut(dump.tasks);
+            }
+            if (dump.dayTasks) {
+              await db.dayTasks.clear();
+              await db.dayTasks.bulkPut(dump.dayTasks);
+            }
+            if (dump.dayLogs) {
+              await db.dayLogs.clear();
+              await db.dayLogs.bulkPut(dump.dayLogs);
+            }
+            if (dump.weeklyQuests) {
+              await db.weeklyQuests.clear();
+              await db.weeklyQuests.bulkPut(dump.weeklyQuests);
+            }
+            if (dump.promptFires) {
+              await db.promptFires.clear();
+              await db.promptFires.bulkPut(dump.promptFires);
+            }
+          });
+          await load();
+          alert("Data imported successfully.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to import data. Invalid file format.");
+      }
+    };
+    reader.readAsText(file);
   };
 
   const wipe = async () => {
@@ -222,6 +267,19 @@ function ProfilePage() {
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm font-medium"
           >
             <Download className="h-4 w-4" /> Export local data
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={importData}
+            accept=".json"
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm font-medium"
+          >
+            <Upload className="h-4 w-4" /> Import local data
           </button>
           <button
             onClick={wipe}

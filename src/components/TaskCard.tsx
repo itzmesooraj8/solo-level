@@ -14,6 +14,7 @@ type TaskCardData = {
   durationMin?: number;
   status?: DayTaskStatus;
   xpDelta?: number;
+  archived?: boolean;
 };
 
 type TaskCardProps = {
@@ -83,6 +84,7 @@ export function TaskCard({
             {task.durationMin ? <span>{task.durationMin}m</span> : null}
             {task.notify && task.notify !== "strict" ? <span>{task.notify}</span> : null}
             {task.reverse ? <span>reverse</span> : null}
+            {task.archived ? <span className="text-neon-amber">archived</span> : null}
           </div>
 
           <div className="mt-1 text-lg font-bold leading-tight text-foreground">{task.title}</div>
@@ -103,8 +105,8 @@ export function TaskCard({
 
           {mode === "library" ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/4 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <Pencil className="h-3 w-3" />
-              Edit
+              {task.archived ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
+              {task.archived ? "Archived" : "Edit"}
             </span>
           ) : resolved ? (
             <span
