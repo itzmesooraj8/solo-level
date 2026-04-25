@@ -61,3 +61,15 @@ adb install -r android/app/release/app-release.apk
 
 - Notification action taps (YES/NO) resolve pending tasks through the same game engine logic as the in-app prompt.
 - Web builds still work without Capacitor runtime; notification service falls back to browser Notification API.
+- **Platform Note**: Background notification action buttons are supported on Android (Capacitor) and most modern browsers. iOS Safari currently does not support action buttons in the standard Web Notification API fallback.
+
+## 7. Publish to GitHub
+
+To reach 100/100 production status:
+
+1. Go to [https://github.com/itzmesooraj8/solo-level/releases/new](https://github.com/itzmesooraj8/solo-level/releases/new).
+2. Select the `v1.0.0` tag.
+3. Title it `v1.0.0 — Shadow Monarch Release`.
+4. Add release notes detailing the S-Rank features (DnD quests, rank system, native haptics).
+5. Attach the signed APK from `android/app/release/app-release.apk`.
+6. Click **Publish release**.
