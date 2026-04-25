@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import type { DayTask, Task } from "@/lib/db";
+import { db, type DayTask, type Task } from "@/lib/db";
 
 interface PromptState {
   active: DayTask | null;
   queue: DayTask[];
   show: (t: DayTask) => void;
+  openForTask: (taskId: string) => Promise<void>;
   dismiss: () => void;
 
   // Quick add modal
@@ -24,6 +25,12 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       set({ queue: [...queue, t] });
     } else {
       set({ active: t });
+    }
+  },
+  openForTask: async (taskId) => {
+    const dt = await db.dayTasks.get(taskId);
+    if (dt && dt.status === "pending") {
+      get().show(dt);
     }
   },
   dismiss: () => {

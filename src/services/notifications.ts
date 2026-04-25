@@ -68,10 +68,19 @@ async function ensureNativeActions() {
         const extra = event.notification.extra as { taskId?: string } | undefined;
         const taskId = extra?.taskId;
         const actionId = event.actionId;
-        if (!taskId || !actionId) return;
-        if (actionId !== "yes" && actionId !== "no") return;
-        if (!actionHandler) return;
-        void actionHandler({ id: taskId, action: actionId as NotifyAction });
+
+        if (!taskId) return;
+
+        // If it's a specific action button (YES/NO)
+        if (actionId === "yes" || actionId === "no") {
+          if (actionHandler) {
+            void actionHandler({ id: taskId, action: actionId as NotifyAction });
+          }
+          return;
+        }
+
+        // Default tap behavior (actionId === "tap")
+        window.dispatchEvent(new CustomEvent("hunter:open", { detail: { taskId } }));
       },
     );
   }

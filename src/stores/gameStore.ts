@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { db, getOrInitPlayer, type GameMode, type PlayerStats } from "@/lib/db";
 import { levelForXp } from "@/lib/leveling";
+import { getRank, type HunterRank } from "@/lib/ranks";
 
 interface GameState {
   player: PlayerStats | null;
@@ -9,6 +10,7 @@ interface GameState {
   pendingStreakBreak: { from: number; to: number } | null;
   recentXp: { amount: number; key: number } | null;
   pendingMilestone: number | null;
+  pendingRankUp: HunterRank | null;
 
   load: () => Promise<void>;
   applyXp: (delta: number) => Promise<void>;
@@ -20,6 +22,7 @@ interface GameState {
   setHunterName: (name: string) => Promise<void>;
   setPendingMilestone: (streak: number) => void;
   clearPendingMilestone: () => void;
+  setPendingRankUp: (rank: HunterRank | null) => void;
   clearLevelUp: () => void;
   clearStreakBreak: () => void;
   wipeAll: () => Promise<void>;
@@ -36,6 +39,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pendingStreakBreak: null,
   recentXp: null,
   pendingMilestone: null,
+  pendingRankUp: null,
 
   load: async () => {
     const p = await getOrInitPlayer();
@@ -48,12 +52,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newXp = Math.max(0, p.xp + delta);
     const oldLevel = levelForXp(p.xp);
     const newLevel = levelForXp(newXp);
+
+    const oldRank = getRank(p.xp);
+    const newRank = getRank(newXp);
+
     const next: PlayerStats = { ...p, xp: newXp, level: newLevel };
     await persist(next);
+
     set({
       player: next,
       recentXp: { amount: delta, key: Date.now() },
       pendingLevelUp: newLevel > oldLevel ? { from: oldLevel, to: newLevel } : get().pendingLevelUp,
+      pendingRankUp: newRank !== oldRank ? newRank : get().pendingRankUp,
     });
   },
 
@@ -111,6 +121,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setPendingMilestone: (streak) => set({ pendingMilestone: streak }),
   clearPendingMilestone: () => set({ pendingMilestone: null }),
+
+  setPendingRankUp: (rank) => set({ pendingRankUp: rank }),
 
   clearLevelUp: () => set({ pendingLevelUp: null }),
   clearStreakBreak: () => set({ pendingStreakBreak: null }),

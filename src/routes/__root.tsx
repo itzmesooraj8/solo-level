@@ -9,11 +9,13 @@ import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { DesktopStatusBar } from "@/components/DesktopStatusBar";
 import { PopupOverlay } from "@/components/PopupOverlay";
 import { LevelUpOverlay } from "@/components/LevelUpOverlay";
+import { RankUpOverlay } from "@/components/RankUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
 import { StreakBrokenOverlay } from "@/components/StreakBrokenOverlay";
 import { StreakMilestoneOverlay } from "@/components/StreakMilestoneOverlay";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { HunterErrorBoundary } from "@/components/ErrorBoundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameStore } from "@/stores/gameStore";
 import {
@@ -27,6 +29,7 @@ import { db } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useRouter } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
@@ -108,11 +111,20 @@ function RootComponent() {
   const load = useGameStore((s) => s.load);
   const milestone = useGameStore((s) => s.pendingMilestone);
   const clearMilestone = useGameStore((s) => s.clearPendingMilestone);
+  const rankUp = useGameStore((s) => s.pendingRankUp);
+  const clearRankUp = useGameStore((s) => s.setPendingRankUp);
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const openPrompt = usePromptStore((s) => s.openForTask);
 
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
+    // Database version change listener (e.g. from another tab)
+    db.on("versionchange", () => {
+      window.location.reload();
+    });
+
     const handler = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -128,6 +140,29 @@ function RootComponent() {
     (async () => {
       await load();
       if (!mounted) return;
+
+      // Handle custom events from notifications service
+      const handleComplete = async (e: any) => {
+        const taskId = e.detail.taskId;
+        const dt = await db.dayTasks.get(taskId);
+        if (dt) await resolveTask(dt, "yes");
+      };
+      const handleSkip = async (e: any) => {
+        const taskId = e.detail.taskId;
+        const dt = await db.dayTasks.get(taskId);
+        if (dt) await resolveTask(dt, "no");
+      };
+      const handleOpen = async (e: any) => {
+        const taskId = e.detail.taskId;
+        // Navigate to home first
+        router.navigate({ to: "/" });
+        // Tiny delay for animation/render
+        setTimeout(() => openPrompt(taskId), 350);
+      };
+
+      window.addEventListener('hunter:complete', handleComplete);
+      window.addEventListener('hunter:skip', handleSkip);
+      window.addEventListener('hunter:open', handleOpen);
 
       await notifications.setActionHandler(async ({ id, action }) => {
         const dt = await db.dayTasks.get(id);
@@ -217,7 +252,9 @@ function RootComponent() {
             className={`flex-1 overflow-y-auto px-3 pt-3 ${isMobile ? "pb-32" : "pb-6 md:px-5 lg:px-8"}`}
           >
             <div className={isMobile ? "" : "mx-auto w-full max-w-350"}>
-              <Outlet />
+              <HunterErrorBoundary>
+                <Outlet />
+              </HunterErrorBoundary>
             </div>
           </main>
         </div>
@@ -231,6 +268,7 @@ function RootComponent() {
       <LevelUpOverlay />
       <StreakBrokenOverlay />
       <StreakMilestoneOverlay streak={milestone} onDismiss={clearMilestone} />
+      <RankUpOverlay rank={rankUp} onDismiss={() => clearRankUp(null)} />
       <OnboardingWizard />
       <PWAInstallBanner prompt={installPrompt} onDismiss={() => setInstallPrompt(null)} />
     </div>
