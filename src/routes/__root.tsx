@@ -12,6 +12,7 @@ import { LevelUpOverlay } from "@/components/LevelUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
 import { StreakBrokenOverlay } from "@/components/StreakBrokenOverlay";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameStore } from "@/stores/gameStore";
 import {
@@ -204,6 +205,7 @@ function RootComponent() {
       <XpToast />
       <PopupOverlay />
       <TaskEditorSheet />
+      <OnboardingWizard />
       <LevelUpOverlay />
       <StreakBrokenOverlay />
     </div>

@@ -61,6 +61,7 @@ export interface PromptFire {
 
 export interface PlayerStats {
   id: "me";
+  hunterName?: string;
   xp: number;
   level: number;
   bestStreak: number;

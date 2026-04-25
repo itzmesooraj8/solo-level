@@ -7,6 +7,16 @@ import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
 import { XPBar } from "@/components/XPBar";
+import { useLiveQuery } from "dexie-react-hooks";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -30,8 +40,14 @@ function ProfilePage() {
   const player = useGameStore((s) => s.player);
   const setMode = useGameStore((s) => s.setMode);
   const wipeAll = useGameStore((s) => s.wipeAll);
+  const logs = useLiveQuery(() => db.dayLogs.orderBy("dateKey").reverse().limit(30).toArray(), []);
 
   if (!player) return null;
+
+  const chartData = (logs ?? []).reverse().map((log) => ({
+    date: log.dateKey.slice(5),
+    xp: log.xpEarned,
+  }));
 
   const exportData = async () => {
     const dump = {
@@ -78,7 +94,9 @@ function ProfilePage() {
             {player.level}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Hunter</div>
+            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              {player.hunterName ? player.hunterName : "Hunter"}
+            </div>
             <div className="truncate text-2xl font-black neon-text-violet">
               {rankTitle(player.level)}
             </div>
@@ -113,6 +131,45 @@ function ProfilePage() {
           label="Missed"
           value={player.tasksMissed}
         />
+      </div>
+
+      <div className="glass rounded-3xl p-4">
+        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          XP per day (last 30)
+        </div>
+        {chartData.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/3 px-3 py-4 text-xs text-muted-foreground">
+            No day history yet. Complete quests to start charting XP gains.
+          </div>
+        ) : (
+          <div className="h-30 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+                <XAxis dataKey="date" hide />
+                <YAxis hide />
+                <Tooltip
+                  formatter={(value: number) => [`${value} XP`, "XP"]}
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                  labelStyle={{ color: "var(--muted-foreground)" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="xp"
+                  stroke="var(--neon-cyan)"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Mode toggle */}

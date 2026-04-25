@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, ListChecks, CalendarDays, User, Sword } from "lucide-react";
 import { motion } from "framer-motion";
+import { notifications } from "@/services/notifications";
 
 const items = [
   { to: "/", label: "Home", icon: Home },
@@ -24,6 +25,7 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
+              onClick={() => notifications.vibrate(10)}
               className="relative flex flex-1 flex-col items-center justify-center rounded-full px-2 py-2 text-[10px] font-medium uppercase tracking-wider"
               aria-label={label}
             >
