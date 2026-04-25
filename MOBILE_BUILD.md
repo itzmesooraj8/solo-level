@@ -44,12 +44,16 @@ In Android Studio:
 2. Replace launcher icons (`mipmap-*`) with production icon set.
 3. Adjust splash resources if needed.
 
-## 6. Generate signed APK
+## 6. Generate signed APK and Release
 
 1. Build -> Generate Signed Bundle / APK -> APK.
 2. Create or select a keystore (`.jks`).
 3. Choose `release` and enable V1 + V2 signatures.
 4. Build output appears in `android/app/release/`.
+5. **Zip the APK** for GitHub upload (GitHub does not support raw `.apk` files):
+   ```powershell
+   Compress-Archive -Path "android/app/release/app-release.apk" -DestinationPath "solo-level-v1.0.0.apk.zip"
+   ```
 
 Install on device:
 
@@ -71,5 +75,5 @@ To reach 100/100 production status:
 2. Select the `v1.0.0` tag.
 3. Title it `v1.0.0 — Shadow Monarch Release`.
 4. Add release notes detailing the S-Rank features (DnD quests, rank system, native haptics).
-5. Attach the signed APK from `android/app/release/app-release.apk`.
+5. Attach the zipped APK: `solo-level-v1.0.0.apk.zip`.
 6. Click **Publish release**.

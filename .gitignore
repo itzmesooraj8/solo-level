@@ -25,6 +25,10 @@ dist-ssr
 *.keystore
 hunter-release.jks
 
+# Build artifacts
+*.apk
+*.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
