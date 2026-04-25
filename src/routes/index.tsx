@@ -6,6 +6,7 @@ import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
 import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X } from "lucide-react";
 import { NotificationPermissionCard } from "@/components/NotificationPermissionCard";
+import { WeeklySparkline } from "@/components/WeeklySparkline";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
@@ -143,6 +144,7 @@ function Dashboard() {
       </section>
 
       <aside className="space-y-3">
+        <WeeklySparkline />
         {/* Today progress */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}

@@ -4,7 +4,7 @@ import { db, type Task } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
 import { Plus, Lock, Archive } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { isDayLocked } from "@/lib/engine";
+import { isDayLocked, upsertTask } from "@/lib/engine";
 import { dateKey } from "@/lib/dateKeys";
 import { TaskCard } from "@/components/TaskCard";
 import { useState } from "react";
@@ -88,6 +88,11 @@ function TasksPage() {
                   locked={todayLocked}
                   onEdit={() => {
                     if (!todayLocked) openAdd(t);
+                  }}
+                  onArchive={async () => {
+                    if (!todayLocked) {
+                      await upsertTask({ ...t, archived: !t.archived });
+                    }
                   }}
                 />
               </motion.div>

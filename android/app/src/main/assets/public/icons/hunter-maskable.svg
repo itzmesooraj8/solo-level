@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hunter System maskable icon">
+  <defs>
+    <linearGradient id="gm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#1a1430"/>
+      <stop offset="100%" stop-color="#050507"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#gm)" stroke-width="22"/>
+  <polygon points="256,158 340,207 340,305 256,354 172,305 172,207" fill="none" stroke="#22d3ee" stroke-width="16"/>
+  <text x="256" y="286" text-anchor="middle" fill="#f5e8ff" font-size="100" font-family="Segoe UI, Arial, sans-serif" font-weight="700">H</text>
+</svg>

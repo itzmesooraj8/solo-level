@@ -24,6 +24,7 @@ type TaskCardProps = {
   locked?: boolean;
   onComplete?: () => void | Promise<void>;
   onSkip?: () => void | Promise<void>;
+  onArchive?: () => void | Promise<void>;
   onEdit?: () => void;
 };
 
@@ -54,6 +55,7 @@ export function TaskCard({
   locked = false,
   onComplete,
   onSkip,
+  onArchive,
   onEdit,
 }: TaskCardProps) {
   const accent = DIFFICULTY_STYLE[task.difficulty];
@@ -104,10 +106,17 @@ export function TaskCard({
           </span>
 
           {mode === "library" ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/4 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {task.archived ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
-              {task.archived ? "Archived" : "Edit"}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/4 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {task.archived ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
+                {task.archived ? "Archived" : "Edit"}
+              </span>
+              {!locked && (
+                <div className="text-[8px] uppercase tracking-tighter text-muted-foreground opacity-50">
+                  Swipe right to {task.archived ? "restore" : "archive"}
+                </div>
+              )}
+            </div>
           ) : resolved ? (
             <span
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-background"
@@ -165,20 +174,6 @@ export function TaskCard({
     </div>
   );
 
-  if (mode === "library") {
-    return (
-      <motion.button
-        type="button"
-        whileTap={{ scale: locked ? 1 : 0.98 }}
-        onClick={locked ? undefined : onEdit}
-        disabled={locked}
-        className="group relative w-full text-left disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {body}
-      </motion.button>
-    );
-  }
-
   return (
     <motion.div
       layout
@@ -187,10 +182,17 @@ export function TaskCard({
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={(_, info) => {
         if (resolved || locked) return;
-        if (info.offset.x > 72) void onComplete?.();
-        if (info.offset.x < -72) void onSkip?.();
+        if (mode === "today") {
+          if (info.offset.x > 72) void onComplete?.();
+          if (info.offset.x < -72) void onSkip?.();
+        } else if (mode === "library") {
+          if (info.offset.x > 72) void onArchive?.();
+        }
       }}
       whileTap={{ scale: resolved || locked ? 1 : 0.985 }}
+      onClick={() => {
+        if (mode === "library" && !locked) onEdit?.();
+      }}
       className={`touch-pan-y ${locked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"}`}
     >
       {body}

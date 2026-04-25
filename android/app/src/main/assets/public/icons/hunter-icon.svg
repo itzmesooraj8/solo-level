@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hunter System icon">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="g2" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#151226"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#g2)"/>
+  <circle cx="256" cy="256" r="162" fill="none" stroke="url(#g1)" stroke-width="18"/>
+  <circle cx="256" cy="256" r="112" fill="none" stroke="#8b5cf6" stroke-opacity="0.65" stroke-width="10"/>
+  <polygon points="256,146 356,203 356,309 256,366 156,309 156,203" fill="none" stroke="#22d3ee" stroke-width="18"/>
+  <text x="256" y="284" text-anchor="middle" fill="#e9d5ff" font-size="108" font-family="Segoe UI, Arial, sans-serif" font-weight="700">H</text>
+</svg>
