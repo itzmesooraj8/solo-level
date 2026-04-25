@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
-import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X } from "lucide-react";
+import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X, Shield } from "lucide-react";
 import { NotificationPermissionCard } from "@/components/NotificationPermissionCard";
 import { WeeklySparkline } from "@/components/WeeklySparkline";
+import { RankBadge } from "@/components/RankBadge";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
@@ -118,8 +119,9 @@ function Dashboard() {
           <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
             {greeting()}
           </div>
-          <h1 className="mt-1 text-3xl font-black leading-tight">
-            Welcome back, <span className="neon-text-violet">{player.hunterName || "Hunter"}</span>
+          <h1 className="mt-1 flex items-center gap-3 text-3xl font-black leading-tight">
+            Welcome, <span className="neon-text-violet">{player.hunterName || "Hunter"}</span>
+            <RankBadge totalXp={player.xp} className="h-8 w-8 text-sm" />
           </h1>
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-neon-cyan" />

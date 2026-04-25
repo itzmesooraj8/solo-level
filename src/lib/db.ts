@@ -17,6 +17,8 @@ export interface Task {
   createdAt: number;
   archived?: boolean;
   targetDate?: string; // YYYY-MM-DD
+  recurrence?: "none" | "daily" | "weekly";
+  templateId?: string;
 }
 
 export type DayTaskStatus = "pending" | "completed" | "skipped" | "missed";
@@ -92,6 +94,14 @@ class HunterDB extends Dexie {
     });
     this.version(2).stores({
       tasks: "id, createdAt, archived",
+      dayTasks: "id, dateKey, taskId, status, time",
+      dayLogs: "dateKey, status",
+      weeklyQuests: "id, weekKey, dayIndex",
+      promptFires: "id, dateKey, firedAt",
+      player: "id",
+    });
+    this.version(3).stores({
+      tasks: "id, createdAt, archived, recurrence, templateId, [templateId+targetDate]",
       dayTasks: "id, dateKey, taskId, status, time",
       dayLogs: "dateKey, status",
       weeklyQuests: "id, weekKey, dayIndex",

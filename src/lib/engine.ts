@@ -6,6 +6,7 @@ import { DIFFICULTY_XP } from "@/lib/leveling";
 import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
+import { format, addDays, addWeeks, parseISO } from "date-fns";
 
 const resolving = new Set<string>();
 
@@ -18,8 +19,56 @@ export function isDayLocked(dKey: string) {
   return false;
 }
 
+/** Materialize recurring tasks into one-off tasks for today. */
+export async function materializeRecurringTasks() {
+  const today = dateKey();
+  const templates = await db.tasks.where("recurrence").anyOf("daily", "weekly").toArray();
+
+  for (const t of templates) {
+    // If it has a targetDate, it's either an instance or a template that already fired for that date.
+    // For templates, targetDate should probably be the last materialized date.
+    // Let's use the index [templateId+targetDate] to check if we already created today's instance.
+    const existing = await db.tasks.where("[templateId+targetDate]").equals([t.id, today]).count();
+    if (existing > 0) continue;
+
+    // Check if it's time to materialize
+    const nextDate = getNextOccurrence(t.targetDate || format(new Date(t.createdAt), "yyyy-MM-dd"), t.recurrence as "daily" | "weekly");
+
+    if (nextDate === today) {
+      await db.tasks.add({
+        ...t,
+        id: `inst_${Math.random().toString(36).slice(2, 10)}`,
+        templateId: t.id,
+        targetDate: today,
+        recurrence: "none", // instances are one-off
+        createdAt: Date.now(),
+      });
+    }
+  }
+}
+
+function getNextOccurrence(lastDate: string, recurrence: "daily" | "weekly"): string {
+  const last = parseISO(lastDate);
+  const todayStr = dateKey();
+  let cursor = last;
+
+  if (recurrence === "daily") {
+    // Walk forward from lastDate until we hit today or beyond
+    while (format(cursor, "yyyy-MM-dd") < todayStr) {
+      cursor = addDays(cursor, 1);
+    }
+  } else if (recurrence === "weekly") {
+    while (format(cursor, "yyyy-MM-dd") < todayStr) {
+      cursor = addWeeks(cursor, 1);
+    }
+  }
+
+  return format(cursor, "yyyy-MM-dd");
+}
+
 /** Materialize today's DayTasks from the active task library. Idempotent. */
 export async function materializeToday() {
+  await materializeRecurringTasks();
   const today = dateKey();
   const all = await db.tasks.toArray();
   const active = all.filter((t) => !t.archived && (!t.targetDate || t.targetDate === today));
@@ -174,8 +223,17 @@ export async function evaluatePastDays() {
     const log = await db.dayLogs.get(k);
     if (log && (log.completed > 0 || log.skipped > 0 || log.missed > 0)) {
       const bad = log.skipped + log.missed;
-      if (bad >= reset) current = 0;
-      else current += 1;
+      if (bad >= reset) {
+        current = 0;
+      } else {
+        current += 1;
+        // Streak milestone bonus
+        if ([7, 14, 30, 60, 100].includes(current)) {
+          const bonus = current === 100 ? 500 : current >= 30 ? 200 : 50;
+          await game.applyXp(bonus);
+          // We should ideally fire a notification/toast here
+        }
+      }
       best = Math.max(best, current);
     }
     cursor.setDate(cursor.getDate() + 1);

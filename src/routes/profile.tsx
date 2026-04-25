@@ -7,7 +7,11 @@ import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
 import { XPBar } from "@/components/XPBar";
-import { useState, useRef } from "react";
+import { RankBadge } from "@/components/RankBadge";
+import { useState, useRef, useMemo } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { subDays, format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -161,6 +165,7 @@ function ProfilePage() {
                   <div className="truncate text-2xl font-black neon-text-violet">
                     {player.hunterName || "Unnamed Hunter"}
                   </div>
+                  <RankBadge totalXp={player.xp} className="h-6 w-6 text-[10px]" />
                   <Edit2 className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                 </div>
               )}
@@ -176,6 +181,21 @@ function ProfilePage() {
       </motion.div>
 
       <XPBar xp={player.xp} level={player.level} compact />
+
+      {/* 30-Day Activity */}
+      <div className="glass rounded-3xl p-4 overflow-hidden">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            30-Day Activity
+          </div>
+          <div className="text-[10px] font-bold text-neon-cyan">
+            Last 30 Days
+          </div>
+        </div>
+        <div className="h-32 w-full">
+          <ActivityChart />
+        </div>
+      </div>
 
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -288,6 +308,66 @@ function ProfilePage() {
 
       <InstallSystemCard />
     </div>
+  );
+}
+
+function ActivityChart() {
+  const days = useMemo(() => Array.from({ length: 30 }, (_, i) => {
+    const d = subDays(new Date(), 29 - i);
+    return format(d, "yyyy-MM-dd");
+  }), []);
+
+  const logs = useLiveQuery(
+    () => db.dayLogs.where("dateKey").between(days[0], days[29], true, true).toArray(),
+    []
+  );
+
+  const data = useMemo(() => {
+    const logMap = new Map(logs?.map(l => [l.dateKey, l]));
+    return days.map(k => ({
+      date: k,
+      xp: logMap.get(k)?.xpEarned ?? 0,
+      status: logMap.get(k)?.status ?? "none"
+    }));
+  }, [logs, days]);
+
+  const STATUS_COLOR: Record<string, string> = {
+    perfect: "var(--neon-emerald)",
+    partial: "var(--neon-amber)",
+    failed: "var(--neon-magenta)",
+    "in-progress": "var(--neon-cyan)",
+    none: "rgba(255,255,255,0.05)"
+  };
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+        <XAxis
+          dataKey="date"
+          hide
+        />
+        <YAxis hide domain={[0, 'auto']} />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="glass-strong rounded-xl p-2 text-[10px] border-white/10">
+                  <div className="font-bold">{format(parseISO(payload[0].payload.date), "MMM d")}</div>
+                  <div className="neon-text-cyan">{payload[0].value} XP</div>
+                </div>
+              );
+            }
+            return null;
+          }}
+          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+        />
+        <Bar dataKey="xp" radius={[2, 2, 0, 0]}>
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={STATUS_COLOR[entry.status]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 

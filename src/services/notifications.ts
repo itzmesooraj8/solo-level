@@ -6,7 +6,7 @@
  */
 
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
-import type { ActionPerformed } from "@capacitor/local-notifications";
+import { LocalNotifications, type ActionPerformed } from "@capacitor/local-notifications";
 import type { NotifyMode } from "@/lib/db";
 
 export type NotifyPayload = {
@@ -46,7 +46,6 @@ function hashId(id: string) {
 
 async function ensureNativeActions() {
   if (!isNativePlatform()) return;
-  const { LocalNotifications } = await import("@capacitor/local-notifications");
   if (!nativeActionsReady) {
     await LocalNotifications.registerActionTypes({
       types: [
@@ -72,7 +71,7 @@ async function ensureNativeActions() {
         if (!taskId || !actionId) return;
         if (actionId !== "yes" && actionId !== "no") return;
         if (!actionHandler) return;
-        void actionHandler({ id: taskId, action: actionId });
+        void actionHandler({ id: taskId, action: actionId as NotifyAction });
       },
     );
   }
@@ -81,7 +80,6 @@ async function ensureNativeActions() {
 export const notifications = {
   async ensurePermission(): Promise<boolean> {
     if (isNativePlatform()) {
-      const { LocalNotifications } = await import("@capacitor/local-notifications");
       const res = await LocalNotifications.requestPermissions();
       await ensureNativeActions();
       return res.display === "granted";
@@ -100,7 +98,6 @@ export const notifications = {
 
   async fire({ id, title, body, silent }: NotifyPayload) {
     if (isNativePlatform()) {
-      const { LocalNotifications } = await import("@capacitor/local-notifications");
       await ensureNativeActions();
       await LocalNotifications.schedule({
         notifications: [
@@ -130,13 +127,11 @@ export const notifications = {
 
   async cancelTask(id: string) {
     if (!isNativePlatform()) return;
-    const { LocalNotifications } = await import("@capacitor/local-notifications");
     await LocalNotifications.cancel({ notifications: [{ id: hashId(id) }] });
   },
 
   async scheduleDayTasks(tasks: ScheduledTaskNotification[]) {
     if (!isNativePlatform()) return;
-    const { LocalNotifications } = await import("@capacitor/local-notifications");
     await ensureNativeActions();
 
     const pending = await LocalNotifications.getPending();
@@ -184,16 +179,11 @@ export const notifications = {
     }
   },
 
-  vibrate(pattern: number | number[]) {
+  async vibrate(pattern: number | number[]) {
     if (isNativePlatform()) {
-      void import("@capacitor/haptics")
-        .then(({ Haptics, ImpactStyle }) => {
-          const heavy = Array.isArray(pattern) ? pattern.length > 2 : pattern > 40;
-          return Haptics.impact({ style: heavy ? ImpactStyle.Heavy : ImpactStyle.Medium });
-        })
-        .catch(() => {
-          // ignore
-        });
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+      const heavy = Array.isArray(pattern) ? pattern.length > 2 : pattern > 40;
+      await Haptics.impact({ style: heavy ? ImpactStyle.Heavy : ImpactStyle.Medium });
       return;
     }
 
