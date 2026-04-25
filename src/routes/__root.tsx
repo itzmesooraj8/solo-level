@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/react-router";
 import { Capacitor } from "@capacitor/core";
 
@@ -155,9 +155,8 @@ function RootComponent() {
       const handleOpen = async (e: any) => {
         const taskId = e.detail.taskId;
         // Navigate to home first
-        router.navigate({ to: "/" });
-        // Tiny delay for animation/render
-        setTimeout(() => openPrompt(taskId), 350);
+        await router.navigate({ to: "/" });
+        openPrompt(taskId);
       };
 
       window.addEventListener('hunter:complete', handleComplete);
