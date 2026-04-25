@@ -22,17 +22,20 @@ export function isDayLocked(dKey: string) {
 /** Materialize recurring tasks into one-off tasks for today. */
 export async function materializeRecurringTasks() {
   const today = dateKey();
-  const templates = await db.tasks.where("recurrence").anyOf("daily", "weekly").toArray();
+
+  // KEY FIX: only query TRUE templates (no templateId = not an instance)
+  const allRecurring = await db.tasks
+    .where("recurrence").anyOf("daily", "weekly")
+    .toArray();
+
+  const templates = allRecurring.filter(t => !t.templateId);
 
   for (const t of templates) {
-    // If it has a targetDate, it's either an instance or a template that already fired for that date.
-    // For templates, targetDate should probably be the last materialized date.
-    // Let's use the index [templateId+targetDate] to check if we already created today's instance.
     const existing = await db.tasks.where("[templateId+targetDate]").equals([t.id, today]).count();
     if (existing > 0) continue;
 
-    // Check if it's time to materialize
-    const nextDate = getNextOccurrence(t.targetDate || format(new Date(t.createdAt), "yyyy-MM-dd"), t.recurrence as "daily" | "weekly");
+    const baseDate = t.targetDate || format(new Date(t.createdAt), "yyyy-MM-dd");
+    const nextDate = getNextOccurrence(baseDate, t.recurrence as "daily" | "weekly");
 
     if (nextDate === today) {
       await db.tasks.add({
@@ -231,7 +234,7 @@ export async function evaluatePastDays() {
         if ([7, 14, 30, 60, 100].includes(current)) {
           const bonus = current === 100 ? 500 : current >= 30 ? 200 : 50;
           await game.applyXp(bonus);
-          // We should ideally fire a notification/toast here
+          game.setPendingMilestone(current);
         }
       }
       best = Math.max(best, current);

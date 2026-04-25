@@ -6,6 +6,7 @@ import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
 import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X, Shield } from "lucide-react";
 import { NotificationPermissionCard } from "@/components/NotificationPermissionCard";
+import { OnboardingSheet } from "@/components/OnboardingSheet";
 import { WeeklySparkline } from "@/components/WeeklySparkline";
 import { RankBadge } from "@/components/RankBadge";
 import { db } from "@/lib/db";
@@ -85,6 +86,14 @@ function Dashboard() {
   const player = useGameStore((s) => s.player);
   const openAdd = usePromptStore((s) => s.openAdd);
   const today = dateKey();
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const taskCount = useLiveQuery(() => db.tasks.count(), []);
+
+  useEffect(() => {
+    if (taskCount === 0) setShowOnboarding(true);
+  }, [taskCount]);
+
   const items = useLiveQuery(() => db.dayTasks.where("dateKey").equals(today).toArray(), [today]);
   const [now, setNow] = useState(() => Date.now());
 
@@ -107,6 +116,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)] lg:gap-4 lg:space-y-0">
+      <OnboardingSheet open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
       <section className="space-y-4">
         <NotificationPermissionCard />
         <MissedBanner />

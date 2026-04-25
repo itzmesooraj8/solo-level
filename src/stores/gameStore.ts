@@ -8,6 +8,7 @@ interface GameState {
   pendingLevelUp: { from: number; to: number } | null;
   pendingStreakBreak: { from: number; to: number } | null;
   recentXp: { amount: number; key: number } | null;
+  pendingMilestone: number | null;
 
   load: () => Promise<void>;
   applyXp: (delta: number) => Promise<void>;
@@ -17,6 +18,8 @@ interface GameState {
   setStreak: (current: number, best?: number) => Promise<void>;
   setLastEvaluatedDay: (key: string) => Promise<void>;
   setHunterName: (name: string) => Promise<void>;
+  setPendingMilestone: (streak: number) => void;
+  clearPendingMilestone: () => void;
   clearLevelUp: () => void;
   clearStreakBreak: () => void;
   wipeAll: () => Promise<void>;
@@ -32,6 +35,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pendingLevelUp: null,
   pendingStreakBreak: null,
   recentXp: null,
+  pendingMilestone: null,
 
   load: async () => {
     const p = await getOrInitPlayer();
@@ -104,6 +108,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     await persist(next);
     set({ player: next });
   },
+
+  setPendingMilestone: (streak) => set({ pendingMilestone: streak }),
+  clearPendingMilestone: () => set({ pendingMilestone: null }),
 
   clearLevelUp: () => set({ pendingLevelUp: null }),
   clearStreakBreak: () => set({ pendingStreakBreak: null }),

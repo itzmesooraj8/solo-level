@@ -12,6 +12,7 @@ import { LevelUpOverlay } from "@/components/LevelUpOverlay";
 import { TaskEditorSheet } from "@/components/TaskEditorSheet";
 import { XpToast } from "@/components/XpToast";
 import { StreakBrokenOverlay } from "@/components/StreakBrokenOverlay";
+import { StreakMilestoneOverlay } from "@/components/StreakMilestoneOverlay";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameStore } from "@/stores/gameStore";
@@ -25,6 +26,7 @@ import {
 import { db } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
+import { useLiveQuery } from "dexie-react-hooks";
 
 function NotFoundComponent() {
   return (
@@ -104,7 +106,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const load = useGameStore((s) => s.load);
+  const milestone = useGameStore((s) => s.pendingMilestone);
+  const clearMilestone = useGameStore((s) => s.clearPendingMilestone);
   const isMobile = useIsMobile();
+
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -215,7 +230,48 @@ function RootComponent() {
       <TaskEditorSheet />
       <LevelUpOverlay />
       <StreakBrokenOverlay />
+      <StreakMilestoneOverlay streak={milestone} onDismiss={clearMilestone} />
       <OnboardingWizard />
+      <PWAInstallBanner prompt={installPrompt} onDismiss={() => setInstallPrompt(null)} />
     </div>
+  );
+}
+
+function PWAInstallBanner({ prompt, onDismiss }: { prompt: any; onDismiss: () => void }) {
+  if (!prompt) return null;
+
+  return (
+    <motion.div
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="fixed bottom-24 left-4 right-4 z-[60] md:bottom-6 md:left-auto md:right-6 md:w-80"
+    >
+      <div className="glass-strong rounded-3xl p-4 border border-neon-cyan/30 flex items-center gap-4 shadow-glow-cyan">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-neon-cyan/20">
+          <Sparkles className="h-6 w-6 text-neon-cyan" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-foreground">Install System</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Add to Home Screen</div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={() => {
+              prompt.prompt();
+              onDismiss();
+            }}
+            className="rounded-lg bg-neon-cyan px-3 py-1.5 text-[10px] font-black text-background uppercase"
+          >
+            Install
+          </button>
+          <button
+            onClick={onDismiss}
+            className="text-[9px] text-muted-foreground uppercase font-bold text-center"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 }

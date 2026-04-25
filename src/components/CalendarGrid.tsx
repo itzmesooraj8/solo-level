@@ -29,7 +29,7 @@ const STATUS_COLOR: Record<string, string> = {
   "in-progress": "var(--neon-cyan)",
 };
 
-export function CalendarGrid() {
+export function CalendarGrid({ onDayClick }: { onDayClick?: (date: Date) => void }) {
   const [month, setMonth] = useState(new Date());
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -123,7 +123,10 @@ export function CalendarGrid() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.01 }}
-                onClick={() => setSelected(k)}
+                onClick={() => {
+                  setSelected(k);
+                  onDayClick?.(d);
+                }}
                 className={`relative flex aspect-square flex-col items-center justify-center rounded-2xl text-xs transition ${
                   inMonth ? "" : "opacity-30"
                 }`}
