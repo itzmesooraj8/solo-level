@@ -14,9 +14,9 @@ interface GameState {
   bumpCompleted: () => Promise<void>;
   bumpMissed: () => Promise<void>;
   setMode: (mode: GameMode) => Promise<void>;
-  setHunterName: (name: string) => Promise<void>;
   setStreak: (current: number, best?: number) => Promise<void>;
   setLastEvaluatedDay: (key: string) => Promise<void>;
+  setHunterName: (name: string) => Promise<void>;
   clearLevelUp: () => void;
   clearStreakBreak: () => void;
   wipeAll: () => Promise<void>;
@@ -77,14 +77,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ player: next });
   },
 
-  setHunterName: async (name) => {
-    const p = get().player;
-    if (!p) return;
-    const next = { ...p, hunterName: name.trim() || undefined };
-    await persist(next);
-    set({ player: next });
-  },
-
   setStreak: async (current, best) => {
     const p = get().player;
     if (!p) return;
@@ -101,6 +93,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     const p = get().player;
     if (!p) return;
     const next = { ...p, lastEvaluatedDay: key };
+    await persist(next);
+    set({ player: next });
+  },
+
+  setHunterName: async (name) => {
+    const p = get().player;
+    if (!p) return;
+    const next = { ...p, hunterName: name };
     await persist(next);
     set({ player: next });
   },

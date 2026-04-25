@@ -2,21 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useGameStore } from "@/stores/gameStore";
 import { rankTitle, LEVEL_THRESHOLDS } from "@/lib/leveling";
 import { motion } from "framer-motion";
-import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2 } from "lucide-react";
+import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2, Edit2, Check } from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
 import { XPBar } from "@/components/XPBar";
-import { useLiveQuery } from "dexie-react-hooks";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useState } from "react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -40,14 +31,19 @@ function ProfilePage() {
   const player = useGameStore((s) => s.player);
   const setMode = useGameStore((s) => s.setMode);
   const wipeAll = useGameStore((s) => s.wipeAll);
-  const logs = useLiveQuery(() => db.dayLogs.orderBy("dateKey").reverse().limit(30).toArray(), []);
+  const setHunterName = useGameStore((s) => s.setHunterName);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState(player?.hunterName || "");
 
   if (!player) return null;
 
-  const chartData = (logs ?? []).reverse().map((log) => ({
-    date: log.dateKey.slice(5),
-    xp: log.xpEarned,
-  }));
+  const saveName = async () => {
+    if (tempName.trim()) {
+      await setHunterName(tempName.trim());
+    }
+    setIsEditingName(false);
+  };
 
   const exportData = async () => {
     const dump = {
@@ -94,10 +90,37 @@ function ProfilePage() {
             {player.level}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              {player.hunterName ? player.hunterName : "Hunter"}
+            <div className="flex items-center gap-2">
+              {isEditingName ? (
+                <div className="flex flex-1 items-center gap-2">
+                  <input
+                    autoFocus
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onBlur={saveName}
+                    onKeyDown={(e) => e.key === "Enter" && saveName()}
+                    className="w-full bg-transparent text-2xl font-black outline-none"
+                  />
+                  <button onClick={saveName} className="shrink-0">
+                    <Check className="h-5 w-5 text-neon-emerald" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="group flex cursor-pointer items-center gap-2"
+                  onClick={() => {
+                    setTempName(player.hunterName || "");
+                    setIsEditingName(true);
+                  }}
+                >
+                  <div className="truncate text-2xl font-black neon-text-violet">
+                    {player.hunterName || "Unnamed Hunter"}
+                  </div>
+                  <Edit2 className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+              )}
             </div>
-            <div className="truncate text-2xl font-black neon-text-violet">
+            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               {rankTitle(player.level)}
             </div>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -131,45 +154,6 @@ function ProfilePage() {
           label="Missed"
           value={player.tasksMissed}
         />
-      </div>
-
-      <div className="glass rounded-3xl p-4">
-        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          XP per day (last 30)
-        </div>
-        {chartData.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/3 px-3 py-4 text-xs text-muted-foreground">
-            No day history yet. Complete quests to start charting XP gains.
-          </div>
-        ) : (
-          <div className="h-30 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" hide />
-                <YAxis hide />
-                <Tooltip
-                  formatter={(value: number) => [`${value} XP`, "XP"]}
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: "var(--muted-foreground)" }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="xp"
-                  stroke="var(--neon-cyan)"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
       </div>
 
       {/* Mode toggle */}

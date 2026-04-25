@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { AnimatePresence, motion, animate } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { rankTitle } from "@/lib/leveling";
@@ -20,7 +20,8 @@ export function LevelUpOverlay() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="fixed inset-0 z-70 overflow-hidden"
+          className="fixed inset-0 overflow-hidden"
+          style={{ zIndex: 70 }}
         >
           <Suspense fallback={<div className="absolute inset-0 bg-background" />}>
             <LevelUpScene level={pending.to} />
@@ -73,7 +74,10 @@ export function LevelUpOverlay() {
             >
               <div
                 aria-hidden
-                className="absolute inset-x-0 top-0 h-1 rounded-t-[2.2rem] bg-linear-to-r from-neon-violet via-neon-cyan to-neon-magenta"
+                className="absolute inset-x-0 top-0 h-1 rounded-t-[2.2rem]"
+                style={{
+                  background: "linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta))",
+                }}
               />
               <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
                 <Sparkles className="h-3 w-3 text-neon-cyan" />
@@ -82,9 +86,7 @@ export function LevelUpOverlay() {
               <div className="text-xs font-semibold uppercase tracking-[0.4em] text-neon-cyan">
                 Level Up
               </div>
-              <div className="mt-2 text-7xl font-black neon-text-violet tabular-nums">
-                {pending.to}
-              </div>
+              <AnimatedLevel from={pending.from} to={pending.to} />
               <div className="mt-2 text-2xl font-black text-foreground">
                 {rankTitle(pending.to)}
               </div>
@@ -114,4 +116,19 @@ export function LevelUpOverlay() {
       )}
     </AnimatePresence>
   );
+}
+
+function AnimatedLevel({ from, to }: { from: number; to: number }) {
+  const [current, setCurrent] = useState(from);
+
+  useEffect(() => {
+    const controls = animate(from, to, {
+      duration: 1.5,
+      ease: "easeOut",
+      onUpdate: (latest) => setCurrent(Math.floor(latest)),
+    });
+    return () => controls.stop();
+  }, [from, to]);
+
+  return <div className="mt-2 text-7xl font-black neon-text-violet tabular-nums">{current}</div>;
 }

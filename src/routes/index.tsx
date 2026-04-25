@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
-import { Plus, Flame, Trophy, Target, Lock, Sparkles } from "lucide-react";
+import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X } from "lucide-react";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
@@ -25,6 +25,50 @@ export const Route = createFileRoute("/")({
   }),
   component: Dashboard,
 });
+
+function MissedBanner() {
+  const recentlyMissed = useLiveQuery(
+    () =>
+      db.dayTasks
+        .where("status")
+        .equals("missed")
+        .filter((t) => (t.resolvedAt ? Date.now() - t.resolvedAt < 86400000 : false))
+        .toArray(),
+    [],
+  );
+
+  const [dismissed, setDismissed] = useState(false);
+
+  if (!recentlyMissed || recentlyMissed.length === 0 || dismissed) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      className="glass overflow-hidden rounded-2xl border-none bg-neon-magenta/10"
+    >
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neon-magenta/20">
+            <AlertCircle className="h-5 w-5 text-neon-magenta" />
+          </div>
+          <div>
+            <div className="text-sm font-bold text-foreground">
+              You missed {recentlyMissed.length} tasks
+            </div>
+            <div className="text-xs text-muted-foreground">Surface these as missed in history.</div>
+          </div>
+        </div>
+        <button
+          onClick={() => setDismissed(true)}
+          className="rounded-lg p-2 transition hover:bg-white/5"
+        >
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 function greeting() {
   const h = new Date().getHours();
@@ -64,6 +108,7 @@ function Dashboard() {
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)] lg:gap-4 lg:space-y-0">
       <section className="space-y-4">
+        <MissedBanner />
         {/* Greeting */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -74,7 +119,7 @@ function Dashboard() {
             {greeting()}
           </div>
           <h1 className="mt-1 text-3xl font-black leading-tight">
-            Welcome back, <span className="neon-text-violet">Hunter</span>
+            Welcome back, <span className="neon-text-violet">{player.hunterName || "Hunter"}</span>
           </h1>
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-neon-cyan" />

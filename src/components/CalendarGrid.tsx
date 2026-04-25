@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type DayLog, type DayTask } from "@/lib/db";
 import { dateKey } from "@/lib/dateKeys";
@@ -15,6 +15,12 @@ import {
   subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const STATUS_COLOR: Record<string, string> = {
   perfect: "var(--neon-emerald)",
@@ -120,11 +126,12 @@ export function CalendarGrid() {
                 onClick={() => setSelected(k)}
                 className={`relative flex aspect-square flex-col items-center justify-center rounded-2xl text-xs transition ${
                   inMonth ? "" : "opacity-30"
-                } ${isToday ? "ring-1 ring-neon-violet" : ""}`}
+                }`}
                 style={{
                   background: log
                     ? `color-mix(in oklch, ${STATUS_COLOR[log.status]} 22%, transparent)`
                     : "rgba(255,255,255,0.03)",
+                  boxShadow: isToday ? "0 0 0 1px var(--neon-violet)" : undefined,
                 }}
               >
                 <span className="font-semibold tabular-nums">{format(d, "d")}</span>
@@ -149,40 +156,31 @@ export function CalendarGrid() {
         ))}
       </div>
 
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-55 flex items-end justify-center"
-          >
-            <div
-              className="absolute inset-0 bg-black/40"
-              style={{ backdropFilter: "blur(12px)" }}
-              onClick={() => setSelected(null)}
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 280, damping: 30 }}
-              className="glass-strong relative max-h-[72vh] w-full max-w-md overflow-y-auto rounded-t-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-            >
+      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <SheetContent
+          side="bottom"
+          className="glass-strong h-fit max-h-[85vh] overflow-y-auto rounded-t-[2rem] border-none p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+        >
+          {selected && (
+            <>
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
-              <div className="mb-4 flex items-center justify-between">
+              <SheetHeader className="mb-4 flex flex-row items-center justify-between space-y-0 text-left">
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted-foreground">
                     {format(new Date(selected), "EEEE")}
                   </div>
-                  <h3 className="text-lg font-bold">
+                  <SheetTitle className="text-lg font-bold text-foreground">
                     {format(new Date(selected), "MMMM d, yyyy")}
-                  </h3>
+                  </SheetTitle>
                 </div>
-                <button onClick={() => setSelected(null)} aria-label="Close">
-                  <X className="h-5 w-5 text-muted-foreground" />
+                <button
+                  onClick={() => setSelected(null)}
+                  aria-label="Close"
+                  className="text-muted-foreground"
+                >
+                  <X className="h-5 w-5" />
                 </button>
-              </div>
+              </SheetHeader>
 
               {detailLog && (
                 <div className="mb-3 grid grid-cols-3 gap-2 text-center">
@@ -232,10 +230,10 @@ export function CalendarGrid() {
                   ))}
                 </ul>
               )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

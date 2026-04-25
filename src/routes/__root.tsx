@@ -205,9 +205,9 @@ function RootComponent() {
       <XpToast />
       <PopupOverlay />
       <TaskEditorSheet />
-      <OnboardingWizard />
       <LevelUpOverlay />
       <StreakBrokenOverlay />
+      <OnboardingWizard />
     </div>
   );
 }

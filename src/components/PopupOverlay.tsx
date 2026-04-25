@@ -10,13 +10,14 @@ export function PopupOverlay() {
   return (
     <AnimatePresence>
       {active && (
-        <motion.div
-          key={active.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-60 flex items-center justify-center px-5"
-        >
+          <motion.div
+            key={active.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center px-5"
+            style={{ zIndex: 60 }}
+          >
           <div
             className="absolute inset-0"
             style={{
@@ -37,11 +38,15 @@ export function PopupOverlay() {
           >
             <div
               aria-hidden
-              className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-neon-violet via-neon-cyan to-neon-magenta"
+              className="absolute inset-x-0 top-0 h-1"
+              style={{
+                background: "linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta))",
+              }}
             />
             <div
               aria-hidden
-              className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-(--neon-cyan)/20 blur-3xl"
+              className="absolute -right-10 -top-10 h-24 w-24 rounded-full blur-3xl"
+              style={{ background: "color-mix(in oklch, var(--neon-cyan) 20%, transparent)" }}
             />
 
             <div className="mx-auto mb-3 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">

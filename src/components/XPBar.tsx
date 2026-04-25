@@ -37,7 +37,7 @@ export function XPBar({ xp, level, className = "", compact = false }: XPBarProps
             {rankTitle(level)}
           </h2>
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+            <Sparkles className="h-3.5 w-3.5 text-neon-cyan" />
             LV {lp.level} progression is the core loop
           </div>
         </div>
@@ -72,15 +72,15 @@ export function XPBar({ xp, level, className = "", compact = false }: XPBarProps
       </div>
 
       <div className="relative mt-4 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
-        <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2">
+        <div className="rounded-2xl border border-white/5 bg-white/3 px-3 py-2">
           <div className="font-semibold uppercase tracking-wider">Total XP</div>
           <div className="mt-1 text-base font-black tabular-nums text-foreground">{xp}</div>
         </div>
-        <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2">
+        <div className="rounded-2xl border border-white/5 bg-white/3 px-3 py-2">
           <div className="font-semibold uppercase tracking-wider">Rank title</div>
           <div className="mt-1 flex items-center gap-1 text-base font-black text-foreground">
             <span className="truncate">{rankTitle(level)}</span>
-            <ChevronRight className="h-4 w-4 text-[var(--neon-cyan)]" />
+            <ChevronRight className="h-4 w-4 text-neon-cyan" />
           </div>
         </div>
       </div>
