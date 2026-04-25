@@ -23,6 +23,7 @@ dist-ssr
 # Keystore files
 *.jks
 *.keystore
+hunter-release.jks
 
 # Editor directories and files
 .vscode/*

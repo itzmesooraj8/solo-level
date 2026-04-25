@@ -16,6 +16,7 @@ export interface Task {
   reverse?: boolean; // YES = bad (e.g. "Did you eat junk food?")
   createdAt: number;
   archived?: boolean;
+  targetDate?: string; // YYYY-MM-DD
 }
 
 export type DayTaskStatus = "pending" | "completed" | "skipped" | "missed";

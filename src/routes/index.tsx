@@ -84,7 +84,6 @@ function Dashboard() {
   const player = useGameStore((s) => s.player);
   const openAdd = usePromptStore((s) => s.openAdd);
   const today = dateKey();
-  const todayLocked = isDayLocked(today);
   const items = useLiveQuery(() => db.dayTasks.where("dateKey").equals(today).toArray(), [today]);
   const [now, setNow] = useState(() => Date.now());
 
@@ -101,9 +100,7 @@ function Dashboard() {
   const midnight = new Date();
   midnight.setHours(24, 0, 0, 0);
   const lockMinutes = Math.max(0, Math.floor((midnight.getTime() - now) / 60_000));
-  const lockLabel = todayLocked
-    ? "Tasks are locked until tomorrow"
-    : lockMinutes < 60
+  const lockLabel = lockMinutes < 60
       ? `Tasks lock in ${lockMinutes}m`
       : `Tasks lock in ${Math.floor(lockMinutes / 60)}h ${lockMinutes % 60}m`;
 
@@ -211,9 +208,8 @@ function Dashboard() {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={() => {
-          if (!todayLocked) openAdd();
+          openAdd();
         }}
-        disabled={todayLocked}
         className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-background disabled:cursor-not-allowed disabled:opacity-50 md:bottom-6 md:right-6"
         style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow-violet)" }}
         aria-label="Add task"

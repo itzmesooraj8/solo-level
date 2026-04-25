@@ -13,16 +13,16 @@ export function dayTaskId(dKey: string, taskId: string) {
   return `${dKey}-${taskId}`;
 }
 
-/** Returns true if a day's tasks are locked (the day has started, i.e. it's today or past). */
+/** Returns true if a day's tasks are locked. Disabled by user request. */
 export function isDayLocked(dKey: string) {
-  return dKey <= dateKey();
+  return false;
 }
 
 /** Materialize today's DayTasks from the active task library. Idempotent. */
 export async function materializeToday() {
   const today = dateKey();
   const all = await db.tasks.toArray();
-  const active = all.filter((t) => !t.archived);
+  const active = all.filter((t) => !t.archived && (!t.targetDate || t.targetDate === today));
   for (const t of active) {
     const id = dayTaskId(today, t.id);
     const exists = await db.dayTasks.get(id);
@@ -142,9 +142,14 @@ export async function evaluatePastDays() {
 
   const today = dateKey();
   const lastEval = player.lastEvaluatedDay;
-  // Find every dayTask with dateKey < today still pending → mark missed (no extra XP penalty beyond skip rule).
+
+  // Surface missed prompts if any
   const stale = await db.dayTasks.where("status").equals("pending").toArray();
   const past = stale.filter((d) => d.dateKey < today);
+
+  // If there are many past pending tasks, we might want to just mark them as missed
+  // but if it's only a few, we can prompt.
+  // For now, let's stick to the current "mark missed" but make it visible.
   for (const d of past) {
     await db.dayTasks.put({ ...d, status: "missed", xpDelta: 0, resolvedAt: Date.now() });
     await game.bumpMissed();
@@ -245,32 +250,44 @@ export async function upsertTask(t: Task) {
   if (isDayLocked(today)) return;
 
   await db.tasks.put(t);
-  const id = dayTaskId(today, t.id);
-  const existing = await db.dayTasks.get(id);
-  if (!existing) {
-    await db.dayTasks.put({
-      id,
-      dateKey: today,
-      taskId: t.id,
-      title: t.title,
-      time: t.time,
-      difficulty: t.difficulty,
-      notify: t.notify,
-      promptText: t.promptText,
-      reverse: t.reverse,
-      status: "pending",
-      xpDelta: 0,
-    });
-  } else if (existing.status === "pending") {
-    await db.dayTasks.put({
-      ...existing,
-      title: t.title,
-      time: t.time,
-      difficulty: t.difficulty,
-      notify: t.notify,
-      promptText: t.promptText,
-      reverse: t.reverse,
-    });
+
+  // If the task has a specific target date that is NOT today, do not materialize it today.
+  // Instead, ensure it doesn't linger in today's pending tasks.
+  if (t.targetDate && t.targetDate !== today) {
+    const dtId = dayTaskId(today, t.id);
+    const existing = await db.dayTasks.get(dtId);
+    if (existing && existing.status === "pending") {
+      await db.dayTasks.delete(dtId);
+    }
+  } else {
+    // It's meant for today (or it's a recurring task)
+    const id = dayTaskId(today, t.id);
+    const existing = await db.dayTasks.get(id);
+    if (!existing) {
+      await db.dayTasks.put({
+        id,
+        dateKey: today,
+        taskId: t.id,
+        title: t.title,
+        time: t.time,
+        difficulty: t.difficulty,
+        notify: t.notify,
+        promptText: t.promptText,
+        reverse: t.reverse,
+        status: "pending",
+        xpDelta: 0,
+      });
+    } else if (existing.status === "pending") {
+      await db.dayTasks.put({
+        ...existing,
+        title: t.title,
+        time: t.time,
+        difficulty: t.difficulty,
+        notify: t.notify,
+        promptText: t.promptText,
+        reverse: t.reverse,
+      });
+    }
   }
 
   const pending = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();

@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, X, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, X, Archive, ArchiveRestore, CalendarIcon } from "lucide-react";
+import { format, parseISO, addDays, startOfToday } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { dateKey } from "@/lib/dateKeys";
 import { isDayLocked } from "@/lib/engine";
 
@@ -19,7 +23,6 @@ export function TaskEditorSheet() {
   const open = usePromptStore((s) => s.addOpen);
   const editing = usePromptStore((s) => s.editingTask);
   const close = usePromptStore((s) => s.closeAdd);
-  const todayLocked = isDayLocked(dateKey());
 
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("08:00");
@@ -29,6 +32,10 @@ export function TaskEditorSheet() {
   const [promptText, setPromptText] = useState("");
   const [reverse, setReverse] = useState(false);
   const [archived, setArchived] = useState(false);
+  const [targetDate, setTargetDate] = useState("");
+  const [calOpen, setCalOpen] = useState(false);
+
+  const today = startOfToday();
 
   useEffect(() => {
     if (editing) {
@@ -40,6 +47,7 @@ export function TaskEditorSheet() {
       setPromptText(editing.promptText ?? "");
       setReverse(!!editing.reverse);
       setArchived(!!editing.archived);
+      setTargetDate(editing.targetDate ?? "");
     } else if (open) {
       setTitle("");
       setTime("08:00");
@@ -49,11 +57,11 @@ export function TaskEditorSheet() {
       setPromptText("");
       setReverse(false);
       setArchived(false);
+      setTargetDate("");
     }
   }, [editing, open]);
 
   const save = async () => {
-    if (todayLocked) return;
     if (!title.trim()) return;
     const t: Task = {
       id: editing?.id ?? uid(),
@@ -66,13 +74,13 @@ export function TaskEditorSheet() {
       reverse,
       archived,
       createdAt: editing?.createdAt ?? Date.now(),
+      targetDate: targetDate || undefined,
     };
     await upsertTask(t);
     close();
   };
 
   const remove = async () => {
-    if (todayLocked) return;
     if (!editing) return;
     await deleteTask(editing.id);
     close();
@@ -108,12 +116,6 @@ export function TaskEditorSheet() {
             </div>
 
             <div className="space-y-3">
-              {todayLocked && (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted-foreground">
-                  Day timeline is locked. Task library is read-only until tomorrow.
-                </div>
-              )}
-
               <div>
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -121,7 +123,6 @@ export function TaskEditorSheet() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Morning workout"
-                  disabled={todayLocked}
                   autoFocus
                 />
               </div>
@@ -134,7 +135,6 @@ export function TaskEditorSheet() {
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    disabled={todayLocked}
                   />
                 </div>
                 <div>
@@ -146,8 +146,68 @@ export function TaskEditorSheet() {
                     max={480}
                     value={duration}
                     onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
-                    disabled={todayLocked}
                   />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="date">Scheduled Date (Optional)</Label>
+                <div className="mt-1 flex gap-2">
+                  <Popover open={calOpen} onOpenChange={setCalOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal border-white/10 bg-white/5",
+                          !targetDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {targetDate ? format(parseISO(targetDate), "PPP") : <span>Recurring Daily</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[60] bg-background border-white/10" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={targetDate ? parseISO(targetDate) : undefined}
+                        onSelect={(date) => {
+                          setTargetDate(date ? format(date, "yyyy-MM-dd") : "");
+                          setCalOpen(false);
+                        }}
+                        disabled={(date) => date < today}
+                        initialFocus
+                      />
+                      <div className="flex gap-2 p-3 border-t border-white/10">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setTargetDate(format(today, "yyyy-MM-dd")); setCalOpen(false); }}
+                          className="text-xs h-7"
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setTargetDate(format(addDays(today, 1), "yyyy-MM-dd")); setCalOpen(false); }}
+                          className="text-xs h-7"
+                        >
+                          Tmrw
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setTargetDate(""); setCalOpen(false); }}
+                          className="text-xs h-7 text-neon-magenta"
+                        >
+                          Daily
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  "Recurring Daily" tasks appear every day. Set a specific date for a one-off quest.
                 </div>
               </div>
 
@@ -158,7 +218,6 @@ export function TaskEditorSheet() {
                     <button
                       key={d}
                       onClick={() => setDifficulty(d)}
-                      disabled={todayLocked}
                       className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                         difficulty === d
                           ? "border-transparent text-background"
@@ -190,7 +249,6 @@ export function TaskEditorSheet() {
                     <button
                       key={m}
                       onClick={() => setNotify(m)}
-                      disabled={todayLocked}
                       className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
                         notify === m
                           ? "border-primary bg-primary/20 text-foreground"
@@ -210,7 +268,6 @@ export function TaskEditorSheet() {
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
                   placeholder='e.g. "Did you eat junk food?"'
-                  disabled={todayLocked}
                 />
               </div>
 
@@ -219,7 +276,7 @@ export function TaskEditorSheet() {
                   <div className="font-medium">Reverse logic</div>
                   <div className="text-muted-foreground">YES becomes the penalty</div>
                 </div>
-                <Switch checked={reverse} onCheckedChange={setReverse} disabled={todayLocked} />
+                <Switch checked={reverse} onCheckedChange={setReverse} />
               </div>
 
               {editing && (
@@ -228,7 +285,7 @@ export function TaskEditorSheet() {
                     <div className="font-medium">Archive task</div>
                     <div className="text-muted-foreground">Hide from library and active rotation</div>
                   </div>
-                  <Switch checked={archived} onCheckedChange={setArchived} disabled={todayLocked} />
+                  <Switch checked={archived} onCheckedChange={setArchived} />
                 </div>
               )}
 
@@ -238,7 +295,6 @@ export function TaskEditorSheet() {
                     variant="ghost"
                     size="icon"
                     onClick={remove}
-                    disabled={todayLocked}
                     className="text-[var(--neon-magenta)]"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -246,11 +302,115 @@ export function TaskEditorSheet() {
                 )}
                 <Button
                   onClick={save}
-                  disabled={todayLocked}
                   className="flex-1 rounded-xl"
                   style={{ background: "var(--gradient-primary)", color: "var(--background)" }}
                 >
-                  {todayLocked ? "Locked until tomorrow" : editing ? "Save changes" : "Create task"}
+                  {editing ? "Save changes" : "Create task"}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+              <div>
+                <Label>Difficulty</Label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {(["easy", "medium", "hard"] as const).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDifficulty(d)}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                        difficulty === d
+                          ? "border-transparent text-background"
+                          : "border-white/10 text-muted-foreground"
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
+                      style={
+                        difficulty === d
+                          ? {
+                              background:
+                                d === "easy"
+                                  ? "var(--neon-emerald)"
+                                  : d === "medium"
+                                    ? "var(--neon-cyan)"
+                                    : "var(--neon-magenta)",
+                            }
+                          : undefined
+                      }
+                    >
+                      {d} · +{d === "easy" ? 10 : d === "medium" ? 20 : 40}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>Notification</Label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {(["strict", "smart", "off"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setNotify(m)}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                        notify === m
+                          ? "border-primary bg-primary/20 text-foreground"
+                          : "border-white/10 text-muted-foreground"
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="prompt">Custom prompt (optional)</Label>
+                <Input
+                  id="prompt"
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  placeholder='e.g. "Did you eat junk food?"'
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2">
+                <div className="text-xs">
+                  <div className="font-medium">Reverse logic</div>
+                  <div className="text-muted-foreground">YES becomes the penalty</div>
+                </div>
+                <Switch checked={reverse} onCheckedChange={setReverse} />
+              </div>
+
+              {editing && (
+                <div className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2">
+                  <div className="text-xs">
+                    <div className="font-medium">Archive task</div>
+                    <div className="text-muted-foreground">Hide from library and active rotation</div>
+                  </div>
+                  <Switch checked={archived} onCheckedChange={setArchived} />
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2">
+                {editing && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={remove}
+                    className="text-[var(--neon-magenta)]"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                )}
+                <Button
+                  onClick={save}
+                  className="flex-1 rounded-xl"
+                  style={{ background: "var(--gradient-primary)", color: "var(--background)" }}
+                >
+                  {editing ? "Save changes" : "Create task"}
                 </Button>
               </div>
             </div>

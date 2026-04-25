@@ -133,6 +133,14 @@ function RootComponent() {
 
       if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
         const { App } = await import("@capacitor/app");
+
+        App.addListener("appStateChange", async ({ isActive }) => {
+          if (isActive) {
+            await evaluatePastDays();
+            await materializeToday();
+          }
+        });
+
         const backButtonHandle = await App.addListener("backButton", ({ canGoBack }) => {
           const prompt = usePromptStore.getState();
           if (prompt.active) {

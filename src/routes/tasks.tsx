@@ -32,7 +32,6 @@ export const Route = createFileRoute("/tasks")({
 function TasksPage() {
   const tasks = useLiveQuery(() => db.tasks.orderBy("createdAt").toArray()) as Task[] | undefined;
   const openAdd = usePromptStore((s) => s.openAdd);
-  const todayLocked = isDayLocked(dateKey());
   const [showArchived, setShowArchived] = useState(false);
 
   const filteredTasks = tasks?.filter((t) => (showArchived ? true : !t.archived));
@@ -45,11 +44,7 @@ function TasksPage() {
           <h1 className="text-3xl font-black">Daily tasks</h1>
         </div>
         <div className="flex flex-col items-end gap-2">
-          {todayLocked && (
-            <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <Lock className="h-3 w-3" /> Day in progress
-            </span>
-          )}
+
           <div className="flex items-center gap-2">
             <Label htmlFor="show-archived" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Show archived</Label>
             <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
@@ -66,9 +61,7 @@ function TasksPage() {
           <div className="mt-1 text-xs text-muted-foreground">
             {showArchived
               ? "Archived tasks will appear here."
-              : todayLocked
-                ? "Task library is locked for today. Create tasks before midnight."
-                : "Tap + to design your first daily quest."}
+              : "Tap + to design your first daily quest."}
           </div>
         </div>
       ) : (
@@ -85,14 +78,11 @@ function TasksPage() {
                 <TaskCard
                   task={t}
                   mode="library"
-                  locked={todayLocked}
                   onEdit={() => {
-                    if (!todayLocked) openAdd(t);
+                    openAdd(t);
                   }}
                   onArchive={async () => {
-                    if (!todayLocked) {
-                      await upsertTask({ ...t, archived: !t.archived });
-                    }
+                    await upsertTask({ ...t, archived: !t.archived });
                   }}
                 />
               </motion.div>
@@ -104,9 +94,8 @@ function TasksPage() {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={() => {
-          if (!todayLocked) openAdd();
+          openAdd();
         }}
-        disabled={todayLocked}
         className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-background disabled:cursor-not-allowed disabled:opacity-50"
         style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow-violet)" }}
         aria-label="Add task"

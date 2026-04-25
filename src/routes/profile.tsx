@@ -75,7 +75,7 @@ function ProfilePage() {
       try {
         const dump = JSON.parse(event.target?.result as string);
         if (confirm("Importing data will OVERWRITE your current progress. Continue?")) {
-          await db.transaction("rw", db.player, db.tasks, db.dayTasks, db.dayLogs, db.weeklyQuests, db.promptFires, async () => {
+          await db.transaction("rw", [db.player, db.tasks, db.dayTasks, db.dayLogs, db.weeklyQuests, db.promptFires], async () => {
             if (dump.player) await db.player.put(dump.player);
             if (dump.tasks) {
               await db.tasks.clear();
@@ -264,23 +264,19 @@ function ProfilePage() {
         <div className="flex flex-col gap-2">
           <button
             onClick={exportData}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm font-medium"
+            className="flex items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-white/15"
           >
-            <Download className="h-4 w-4" /> Export local data
+            <Download className="h-4 w-4 text-neon-cyan" /> Export local data
           </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={importData}
-            accept=".json"
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm font-medium"
-          >
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-neon-emerald/20 border border-neon-emerald/30 px-3 py-2.5 text-sm font-bold text-neon-emerald transition hover:bg-neon-emerald/30">
             <Upload className="h-4 w-4" /> Import local data
-          </button>
+            <input
+              type="file"
+              onChange={importData}
+              accept=".json"
+              className="hidden"
+            />
+          </label>
           <button
             onClick={wipe}
             className="flex items-center gap-2 rounded-xl border border-(--neon-magenta)/30 bg-(--neon-magenta)/10 px-3 py-2 text-sm font-medium text-neon-magenta"
