@@ -73,6 +73,7 @@ export function TaskEditorSheet() {
       archived,
       createdAt: editing?.createdAt ?? Date.now(),
       targetDate: targetDate || undefined,
+      recurrence: targetDate ? "none" : "daily",
     };
     await upsertTask(t);
     close();
@@ -91,7 +92,7 @@ export function TaskEditorSheet() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[55] flex items-end justify-center"
+          className="fixed inset-0 z-[80] flex items-end justify-center"
         >
           <div
             className="absolute inset-0 bg-black/40"

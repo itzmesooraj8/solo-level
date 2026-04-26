@@ -26,6 +26,7 @@ import {
   stopScheduler,
 } from "@/lib/engine";
 import { db } from "@/lib/db";
+import { restoreDbFromPreferences } from "@/lib/sync";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -138,6 +139,9 @@ function RootComponent() {
     let removeBackButton: (() => void) | null = null;
 
     (async () => {
+      // Restore from offline backup if Dexie was wiped by OS
+      await restoreDbFromPreferences();
+      
       await load();
       if (!mounted) return;
 

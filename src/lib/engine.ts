@@ -7,6 +7,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { notifications } from "@/services/notifications";
 import { format, addDays, addWeeks, parseISO } from "date-fns";
+import { backupDbToPreferences } from "@/lib/sync";
 
 const resolving = new Set<string>();
 
@@ -303,6 +304,9 @@ export function startScheduler() {
       }
       usePromptStore.getState().show(dt);
     }
+    
+    // Auto-save backup for offline persistence
+    await backupDbToPreferences();
   };
   tick();
   tickHandle = setInterval(tick, 15_000);

@@ -53,6 +53,18 @@ function hashId(id: string) {
 async function ensureNativeActions() {
   if (!isNativePlatform()) return;
   if (!nativeActionsReady) {
+    try {
+      await LocalNotifications.createChannel({
+        id: "hunter_system",
+        name: "Hunter System",
+        description: "Task reminders and system alerts",
+        importance: 5,
+        visibility: 1,
+      });
+    } catch (e) {
+      // ignore
+    }
+
     await LocalNotifications.registerActionTypes({
       types: [
         {
@@ -124,6 +136,7 @@ export const notifications = {
             actionTypeId: ACTION_TYPE_ID,
             extra: { taskId: id },
             sound: silent ? undefined : "default",
+            channelId: "hunter_system",
           },
         ],
       });
@@ -171,6 +184,7 @@ export const notifications = {
           actionTypeId: ACTION_TYPE_ID,
           extra: { taskId: task.id },
           sound: task.notify === "strict" ? "default" : undefined,
+          channelId: "hunter_system",
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -196,6 +210,7 @@ export const notifications = {
           body: notification.body ?? "A fresh day of quests is ready.",
           schedule: { at: resetAt, allowWhileIdle: true },
           sound: "default",
+          channelId: "hunter_system",
         },
       ],
     });
