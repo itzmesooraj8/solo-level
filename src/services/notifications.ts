@@ -23,6 +23,12 @@ export type ScheduledTaskNotification = {
   notify: NotifyMode;
 };
 
+export type ScheduledResetNotification = {
+  id: string;
+  title: string;
+  body?: string;
+};
+
 export type NotifyAction = "yes" | "no";
 export type NotifyActionEvent = { id: string; action: NotifyAction };
 
@@ -143,9 +149,10 @@ export const notifications = {
     if (!isNativePlatform()) return;
     await ensureNativeActions();
 
-    const pending = await LocalNotifications.getPending();
-    if (pending.notifications.length > 0) {
-      await LocalNotifications.cancel({ notifications: pending.notifications });
+    if (tasks.length > 0) {
+      await LocalNotifications.cancel({
+        notifications: tasks.map((task) => ({ id: hashId(task.id) })),
+      });
     }
 
     const now = new Date();
@@ -171,6 +178,27 @@ export const notifications = {
     if (notificationsToSchedule.length > 0) {
       await LocalNotifications.schedule({ notifications: notificationsToSchedule });
     }
+  },
+
+  async scheduleDailyReset(notification: ScheduledResetNotification) {
+    if (!isNativePlatform()) return;
+    await ensureNativeActions();
+
+    const resetAt = new Date();
+    resetAt.setHours(24, 0, 0, 0);
+
+    await LocalNotifications.cancel({ notifications: [{ id: hashId(notification.id) }] });
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: hashId(notification.id),
+          title: notification.title,
+          body: notification.body ?? "A fresh day of quests is ready.",
+          schedule: { at: resetAt, allowWhileIdle: true },
+          sound: "default",
+        },
+      ],
+    });
   },
 
   async setActionHandler(handler: ((event: NotifyActionEvent) => void | Promise<void>) | null) {

@@ -106,6 +106,11 @@ export async function materializeToday() {
       notify: dt.notify,
     })),
   );
+  await notifications.scheduleDailyReset({
+    id: "daily-reset",
+    title: "Hunter System Reset",
+    body: "A fresh day of quests is ready.",
+  });
 }
 
 function penaltyFor(mode: "strict" | "flex") {
@@ -321,6 +326,7 @@ export async function upsertTask(t: Task) {
     const existing = await db.dayTasks.get(dtId);
     if (existing && existing.status === "pending") {
       await db.dayTasks.delete(dtId);
+      await notifications.cancelTask(dtId);
     }
   } else {
     // It's meant for today (or it's a recurring task)
@@ -366,6 +372,11 @@ export async function upsertTask(t: Task) {
       notify: dt.notify,
     })),
   );
+  await notifications.scheduleDailyReset({
+    id: "daily-reset",
+    title: "Hunter System Reset",
+    body: "A fresh day of quests is ready.",
+  });
 }
 
 export async function deleteTask(id: string) {
@@ -377,6 +388,7 @@ export async function deleteTask(id: string) {
   const existing = await db.dayTasks.get(dtId);
   if (existing && existing.status === "pending") {
     await db.dayTasks.delete(dtId);
+    await notifications.cancelTask(dtId);
   }
 
   await db.promptFires.delete(dtId);
@@ -394,4 +406,9 @@ export async function deleteTask(id: string) {
       notify: dt.notify,
     })),
   );
+  await notifications.scheduleDailyReset({
+    id: "daily-reset",
+    title: "Hunter System Reset",
+    body: "A fresh day of quests is ready.",
+  });
 }
