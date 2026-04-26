@@ -2,10 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Task } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
-import { Plus, Lock, Archive } from "lucide-react";
+import { Plus, Archive } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { isDayLocked, upsertTask } from "@/lib/engine";
-import { dateKey } from "@/lib/dateKeys";
+import { upsertTask } from "@/lib/engine";
 import { TaskCard } from "@/components/TaskCard";
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -44,9 +43,13 @@ function TasksPage() {
           <h1 className="text-3xl font-black">Daily tasks</h1>
         </div>
         <div className="flex flex-col items-end gap-2">
-
           <div className="flex items-center gap-2">
-            <Label htmlFor="show-archived" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Show archived</Label>
+            <Label
+              htmlFor="show-archived"
+              className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Show archived
+            </Label>
             <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
           </div>
         </div>
@@ -57,7 +60,9 @@ function TasksPage() {
       ) : filteredTasks?.length === 0 ? (
         <div className="glass rounded-3xl p-8 text-center">
           <div className="mb-2 text-3xl">{showArchived ? "📁" : "📜"}</div>
-          <div className="text-sm font-semibold">{showArchived ? "Archive is empty." : "No active tasks."}</div>
+          <div className="text-sm font-semibold">
+            {showArchived ? "Archive is empty." : "No active tasks."}
+          </div>
           <div className="mt-1 text-xs text-muted-foreground">
             {showArchived
               ? "Archived tasks will appear here."

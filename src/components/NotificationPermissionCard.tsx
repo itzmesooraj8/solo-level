@@ -6,7 +6,7 @@ import { notifications } from "@/services/notifications";
 export function NotificationPermissionCard() {
   const [show, setShow] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "default">(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "granted"
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "granted",
   );
 
   useEffect(() => {

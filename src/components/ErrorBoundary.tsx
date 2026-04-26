@@ -1,7 +1,10 @@
 import { Component, type ReactNode } from "react";
 import { db } from "@/lib/db";
 
-interface State { hasError: boolean; error: string }
+interface State {
+  hasError: boolean;
+  error: string;
+}
 
 export class HunterErrorBoundary extends Component<{ children: ReactNode }, State> {
   state: State = { hasError: false, error: "" };
@@ -33,7 +36,9 @@ export class HunterErrorBoundary extends Component<{ children: ReactNode }, Stat
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 text-foreground">
           <div className="glass-strong rounded-[2.5rem] p-8 max-w-sm w-full text-center border border-rose-500/20 shadow-glow-magenta">
             <div className="text-5xl mb-4 animate-pulse">💀</div>
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-500 mb-2">System Error</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-rose-500 mb-2">
+              System Error
+            </div>
             <h1 className="text-xl font-black mb-2">The System Has Crashed</h1>
             <p className="text-xs text-muted-foreground mb-4 font-mono break-all line-clamp-3 opacity-60">
               {this.state.error}

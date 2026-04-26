@@ -16,10 +16,7 @@ export function OnboardingWizard() {
   const openAdd = usePromptStore((s) => s.openAdd);
   const addOpen = usePromptStore((s) => s.addOpen);
 
-  const activeTaskCount = useLiveQuery(
-    () => db.tasks.filter((task) => !task.archived).count(),
-    [],
-  );
+  const activeTaskCount = useLiveQuery(() => db.tasks.filter((task) => !task.archived).count(), []);
 
   const shouldStart = !!player && !player.hunterName?.trim() && player.xp === 0;
 

@@ -122,7 +122,11 @@ export function TaskCard({
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-background"
               style={{ background: statusColor }}
             >
-              {task.status === "completed" ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+              {task.status === "completed" ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <X className="h-3 w-3" />
+              )}
               {task.status}
             </span>
           ) : locked ? (
@@ -150,7 +154,10 @@ export function TaskCard({
                 disabled={locked}
                 aria-label="Complete task"
                 className="flex h-12 min-w-12 items-center justify-center rounded-2xl text-background transition disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow-cyan)" }}
+                style={{
+                  background: "var(--gradient-primary)",
+                  boxShadow: "var(--shadow-glow-cyan)",
+                }}
               >
                 <Check className="h-5 w-5" strokeWidth={3} />
               </motion.button>

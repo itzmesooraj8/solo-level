@@ -33,7 +33,9 @@ export function DynamicIsland() {
           </motion.span>
           <div className="leading-tight">
             <div className="text-xs font-black neon-text-violet">LV {player.level}</div>
-            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{rankTitle(player.level)}</div>
+            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+              {rankTitle(player.level)}
+            </div>
           </div>
         </div>
 
@@ -63,7 +65,11 @@ export function DynamicIsland() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="flex items-center justify-center h-8 w-8 rounded-full font-black text-[10px]"
-              style={{ background: RANK_COLORS[rank] + '22', color: RANK_COLORS[rank], border: `1px solid ${RANK_COLORS[rank]}44` }}
+              style={{
+                background: RANK_COLORS[rank] + "22",
+                color: RANK_COLORS[rank],
+                border: `1px solid ${RANK_COLORS[rank]}44`,
+              }}
             >
               {rank}
             </motion.div>
@@ -87,14 +93,21 @@ export function DynamicIsland() {
             <div className="glass-strong rounded-[2rem] p-5 shadow-2xl border border-white/5">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Current Progress</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                    Current Progress
+                  </div>
                   <div className="text-2xl font-black text-foreground tabular-nums">
-                    {player.xp.toLocaleString()} <span className="text-xs text-muted-foreground">XP</span>
+                    {player.xp.toLocaleString()}{" "}
+                    <span className="text-xs text-muted-foreground">XP</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Rank</div>
-                  <div className="text-2xl font-black" style={{ color: RANK_COLORS[rank] }}>{rank}-Rank</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                    Rank
+                  </div>
+                  <div className="text-2xl font-black" style={{ color: RANK_COLORS[rank] }}>
+                    {rank}-Rank
+                  </div>
                 </div>
               </div>
 
@@ -102,12 +115,17 @@ export function DynamicIsland() {
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                     <span className="text-muted-foreground">Level {player.level}</span>
-                    <span className="text-neon-cyan">{lp.within} / {lp.span} XP to Next Level</span>
+                    <span className="text-neon-cyan">
+                      {lp.within} / {lp.span} XP to Next Level
+                    </span>
                   </div>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/5 p-0.5 border border-white/5">
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: "var(--gradient-primary)", boxShadow: "0 0 15px -2px var(--neon-violet)" }}
+                      style={{
+                        background: "var(--gradient-primary)",
+                        boxShadow: "0 0 15px -2px var(--neon-violet)",
+                      }}
                       initial={{ width: 0 }}
                       animate={{ width: `${lp.pct * 100}%` }}
                       transition={{ type: "spring", stiffness: 50, damping: 15 }}
@@ -116,15 +134,32 @@ export function DynamicIsland() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <ExpandedStat icon={<Zap className="h-3 w-3" />} label="Total XP" value={player.xp.toString()} color="neon-text-violet" />
-                  <ExpandedStat icon={<Flame className="h-3 w-3" />} label="Streak" value={player.currentStreak.toString()} color="text-neon-amber" />
-                  <ExpandedStat icon={<Trophy className="h-3 w-3" />} label="Best" value={player.bestStreak.toString()} color="text-neon-cyan" />
+                  <ExpandedStat
+                    icon={<Zap className="h-3 w-3" />}
+                    label="Total XP"
+                    value={player.xp.toString()}
+                    color="neon-text-violet"
+                  />
+                  <ExpandedStat
+                    icon={<Flame className="h-3 w-3" />}
+                    label="Streak"
+                    value={player.currentStreak.toString()}
+                    color="text-neon-amber"
+                  />
+                  <ExpandedStat
+                    icon={<Trophy className="h-3 w-3" />}
+                    label="Best"
+                    value={player.bestStreak.toString()}
+                    color="text-neon-cyan"
+                  />
                 </div>
 
                 <div className="pt-2 flex items-center justify-between border-t border-white/5">
                   <div className="flex items-center gap-2">
                     <Shield className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{player.mode} Mode</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {player.mode} Mode
+                    </span>
                   </div>
                   <button
                     onClick={() => setOpen(false)}
@@ -142,12 +177,24 @@ export function DynamicIsland() {
   );
 }
 
-function ExpandedStat({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string, color: string }) {
+function ExpandedStat({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
     <div className="glass rounded-2xl p-3 border border-white/5 flex flex-col items-center justify-center gap-1">
       <div className="text-muted-foreground/50">{icon}</div>
       <div className={`text-base font-black tabular-nums ${color}`}>{value}</div>
-      <div className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">{label}</div>
+      <div className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }

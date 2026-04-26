@@ -99,7 +99,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     await persist(next);
     set({
       player: next,
-      pendingStreakBreak: p.currentStreak > 0 && current === 0 ? { from: p.currentStreak, to: current } : get().pendingStreakBreak,
+      pendingStreakBreak:
+        p.currentStreak > 0 && current === 0
+          ? { from: p.currentStreak, to: current }
+          : get().pendingStreakBreak,
     });
   },
 

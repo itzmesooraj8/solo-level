@@ -3,28 +3,32 @@ import { Button } from "@/components/ui/button";
 import { RANK_COLORS, type HunterRank } from "@/lib/ranks";
 
 const RANK_TITLES: Record<HunterRank, string> = {
-  E:  "Fledgling Hunter",
-  D:  "Awakened Hunter",
-  C:  "Seasoned Hunter",
-  B:  "Elite Hunter",
-  A:  "Master Hunter",
-  S:  "National Level Hunter",
+  E: "Fledgling Hunter",
+  D: "Awakened Hunter",
+  C: "Seasoned Hunter",
+  B: "Elite Hunter",
+  A: "Master Hunter",
+  S: "National Level Hunter",
   SS: "Shadow Monarch",
 };
 
 const RANK_FLAVOR: Record<HunterRank, string> = {
-  E:  "Your journey begins. The gates await.",
-  D:  "Your power stirs. Others take notice.",
-  C:  "You've proven yourself worthy of the hunt.",
-  B:  "Fear and respect walk beside you.",
-  A:  "Nations bow to hunters of your caliber.",
-  S:  "You stand among the world's finest.",
+  E: "Your journey begins. The gates await.",
+  D: "Your power stirs. Others take notice.",
+  C: "You've proven yourself worthy of the hunt.",
+  B: "Fear and respect walk beside you.",
+  A: "Nations bow to hunters of your caliber.",
+  S: "You stand among the world's finest.",
   SS: "You have surpassed the limits of mankind.",
 };
 
 export function RankUpOverlay({
-  rank, onDismiss
-}: { rank: HunterRank | null; onDismiss: () => void }) {
+  rank,
+  onDismiss,
+}: {
+  rank: HunterRank | null;
+  onDismiss: () => void;
+}) {
   if (!rank) return null;
   const color = RANK_COLORS[rank];
 
@@ -48,7 +52,7 @@ export function RankUpOverlay({
           <motion.div
             animate={{
               boxShadow: [`0 0 20px ${color}44`, `0 0 60px ${color}88`, `0 0 20px ${color}44`],
-              scale: [1, 1.05, 1]
+              scale: [1, 1.05, 1],
             }}
             transition={{ duration: 2, repeat: Infinity }}
             className="w-32 h-32 rounded-full mx-auto mb-8 flex items-center justify-center text-6xl font-black"
@@ -62,12 +66,13 @@ export function RankUpOverlay({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="text-[10px] font-black uppercase tracking-[0.6em] mb-3" style={{ color }}>
+            <div
+              className="text-[10px] font-black uppercase tracking-[0.6em] mb-3"
+              style={{ color }}
+            >
               Rank-Up Protocol
             </div>
-            <h2 className="text-4xl font-black text-white mb-1">
-              {rank}-Rank
-            </h2>
+            <h2 className="text-4xl font-black text-white mb-1">{rank}-Rank</h2>
             <div className="text-xl font-bold mb-4" style={{ color }}>
               {RANK_TITLES[rank]}
             </div>

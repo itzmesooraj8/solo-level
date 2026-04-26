@@ -59,7 +59,9 @@ export function XPBar({ xp, level, className = "", compact = false }: XPBarProps
       <div className="relative mt-4">
         <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           <span>{lp.isMax ? "Rank capped" : `LV ${lp.level}`}</span>
-          <span className="tabular-nums">{lp.isMax ? `${xp} XP` : `${lp.within}/${lp.span} XP`}</span>
+          <span className="tabular-nums">
+            {lp.isMax ? `${xp} XP` : `${lp.within}/${lp.span} XP`}
+          </span>
         </div>
         <div className="relative h-3 overflow-hidden rounded-full bg-white/10">
           <motion.div

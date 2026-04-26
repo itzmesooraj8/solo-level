@@ -24,11 +24,9 @@ export async function materializeRecurringTasks() {
   const today = dateKey();
 
   // KEY FIX: only query TRUE templates (no templateId = not an instance)
-  const allRecurring = await db.tasks
-    .where("recurrence").anyOf("daily", "weekly")
-    .toArray();
+  const allRecurring = await db.tasks.where("recurrence").anyOf("daily", "weekly").toArray();
 
-  const templates = allRecurring.filter(t => !t.templateId);
+  const templates = allRecurring.filter((t) => !t.templateId);
 
   for (const t of templates) {
     const existing = await db.tasks.where("[templateId+targetDate]").equals([t.id, today]).count();
@@ -95,7 +93,11 @@ export async function materializeToday() {
     await db.dayTasks.put(dt);
   }
 
-  const pending = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  const pending = await db.dayTasks
+    .where("dateKey")
+    .equals(today)
+    .and((dt) => dt.status === "pending")
+    .toArray();
   await notifications.scheduleDayTasks(
     pending.map((dt) => ({
       id: dt.id,
@@ -351,7 +353,11 @@ export async function upsertTask(t: Task) {
     }
   }
 
-  const pending = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  const pending = await db.dayTasks
+    .where("dateKey")
+    .equals(today)
+    .and((dt) => dt.status === "pending")
+    .toArray();
   await notifications.scheduleDayTasks(
     pending.map((dt) => ({
       id: dt.id,
@@ -375,7 +381,11 @@ export async function deleteTask(id: string) {
 
   await db.promptFires.delete(dtId);
 
-  const remaining = await db.dayTasks.where("dateKey").equals(today).and((dt) => dt.status === "pending").toArray();
+  const remaining = await db.dayTasks
+    .where("dateKey")
+    .equals(today)
+    .and((dt) => dt.status === "pending")
+    .toArray();
   await notifications.scheduleDayTasks(
     remaining.map((dt) => ({
       id: dt.id,

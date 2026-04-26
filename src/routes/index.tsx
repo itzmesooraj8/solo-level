@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useGameStore } from "@/stores/gameStore";
 import { usePromptStore } from "@/stores/promptStore";
 import { TodayList } from "@/components/TodayList";
-import { Plus, Flame, Trophy, Target, Lock, Sparkles, AlertCircle, X, Shield } from "lucide-react";
+import { Plus, Flame, Trophy, Target, Sparkles, AlertCircle, X, Shield } from "lucide-react";
 import { NotificationPermissionCard } from "@/components/NotificationPermissionCard";
 import { OnboardingSheet } from "@/components/OnboardingSheet";
 import { WeeklySparkline } from "@/components/WeeklySparkline";
@@ -12,7 +12,6 @@ import { RankBadge } from "@/components/RankBadge";
 import { db } from "@/lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { dateKey } from "@/lib/dateKeys";
-import { isDayLocked } from "@/lib/engine";
 import { XPBar } from "@/components/XPBar";
 
 export const Route = createFileRoute("/")({
@@ -110,7 +109,8 @@ function Dashboard() {
   const midnight = new Date();
   midnight.setHours(24, 0, 0, 0);
   const lockMinutes = Math.max(0, Math.floor((midnight.getTime() - now) / 60_000));
-  const lockLabel = lockMinutes < 60
+  const lockLabel =
+    lockMinutes < 60
       ? `Tasks lock in ${lockMinutes}m`
       : `Tasks lock in ${Math.floor(lockMinutes / 60)}h ${lockMinutes % 60}m`;
 

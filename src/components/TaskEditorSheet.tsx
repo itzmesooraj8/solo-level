@@ -12,8 +12,6 @@ import { format, parseISO, addDays, startOfToday } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { dateKey } from "@/lib/dateKeys";
-import { isDayLocked } from "@/lib/engine";
 
 function uid() {
   return `t_${Math.random().toString(36).slice(2, 10)}`;
@@ -159,14 +157,21 @@ export function TaskEditorSheet() {
                         variant={"outline"}
                         className={cn(
                           "w-full justify-start text-left font-normal border-white/10 bg-white/5",
-                          !targetDate && "text-muted-foreground"
+                          !targetDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {targetDate ? format(parseISO(targetDate), "PPP") : <span>Recurring Daily</span>}
+                        {targetDate ? (
+                          format(parseISO(targetDate), "PPP")
+                        ) : (
+                          <span>Recurring Daily</span>
+                        )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[60] bg-background border-white/10" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 z-[60] bg-background border-white/10"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={targetDate ? parseISO(targetDate) : undefined}
@@ -181,7 +186,10 @@ export function TaskEditorSheet() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => { setTargetDate(format(today, "yyyy-MM-dd")); setCalOpen(false); }}
+                          onClick={() => {
+                            setTargetDate(format(today, "yyyy-MM-dd"));
+                            setCalOpen(false);
+                          }}
                           className="text-xs h-7"
                         >
                           Today
@@ -189,7 +197,10 @@ export function TaskEditorSheet() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => { setTargetDate(format(addDays(today, 1), "yyyy-MM-dd")); setCalOpen(false); }}
+                          onClick={() => {
+                            setTargetDate(format(addDays(today, 1), "yyyy-MM-dd"));
+                            setCalOpen(false);
+                          }}
                           className="text-xs h-7"
                         >
                           Tmrw
@@ -197,7 +208,10 @@ export function TaskEditorSheet() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => { setTargetDate(""); setCalOpen(false); }}
+                          onClick={() => {
+                            setTargetDate("");
+                            setCalOpen(false);
+                          }}
                           className="text-xs h-7 text-neon-magenta"
                         >
                           Daily
@@ -283,7 +297,9 @@ export function TaskEditorSheet() {
                 <div className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2">
                   <div className="text-xs">
                     <div className="font-medium">Archive task</div>
-                    <div className="text-muted-foreground">Hide from library and active rotation</div>
+                    <div className="text-muted-foreground">
+                      Hide from library and active rotation
+                    </div>
                   </div>
                   <Switch checked={archived} onCheckedChange={setArchived} />
                 </div>
@@ -315,4 +331,3 @@ export function TaskEditorSheet() {
     </AnimatePresence>
   );
 }
-

@@ -75,7 +75,7 @@ function QuestsPage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const submit = async () => {
@@ -162,9 +162,14 @@ function QuestsPage() {
                 isToday={isToday}
                 onAdd={() => setAdding({ dayIndex: i })}
               >
-                <SortableContext items={dayQuests.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext
+                  items={dayQuests.map((q) => q.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {dayQuests.length === 0 ? (
-                    <div className="text-xs text-muted-foreground py-2 px-1">No quests planned.</div>
+                    <div className="text-xs text-muted-foreground py-2 px-1">
+                      No quests planned.
+                    </div>
                   ) : (
                     <ul className="space-y-2">
                       {dayQuests.map((q) => (
@@ -183,15 +188,17 @@ function QuestsPage() {
           })}
         </div>
 
-        <DragOverlay dropAnimation={{
-          sideEffects: defaultDropAnimationSideEffects({
-            styles: {
-              active: {
-                opacity: '0.5',
+        <DragOverlay
+          dropAnimation={{
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: {
+                active: {
+                  opacity: "0.5",
+                },
               },
-            },
-          }),
-        }}>
+            }),
+          }}
+        >
           {activeQuest ? (
             <div className="flex items-center gap-2 rounded-xl border border-neon-cyan/50 bg-background/80 backdrop-blur-md px-3 py-2 shadow-xl ring-2 ring-neon-cyan/20">
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -271,12 +278,18 @@ function QuestsPage() {
   );
 }
 
-function DroppableDay({ index, date, isToday, onAdd, children }: {
-  index: number,
-  date: Date,
-  isToday: boolean,
-  onAdd: () => void,
-  children: React.ReactNode
+function DroppableDay({
+  index,
+  date,
+  isToday,
+  onAdd,
+  children,
+}: {
+  index: number;
+  date: Date;
+  isToday: boolean;
+  onAdd: () => void;
+  children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useSortable({
     id: `day-${index}`,
@@ -315,19 +328,18 @@ function DroppableDay({ index, date, isToday, onAdd, children }: {
   );
 }
 
-function SortableQuestItem({ quest, onToggle, onRemove }: {
-  quest: WeeklyQuest,
-  onToggle: () => void,
-  onRemove: () => void
+function SortableQuestItem({
+  quest,
+  onToggle,
+  onRemove,
+}: {
+  quest: WeeklyQuest;
+  onToggle: () => void;
+  onRemove: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: quest.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: quest.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -361,13 +373,9 @@ function SortableQuestItem({ quest, onToggle, onRemove }: {
             : undefined
         }
       >
-        {quest.done && (
-          <Check className="h-3.5 w-3.5 text-background" strokeWidth={3} />
-        )}
+        {quest.done && <Check className="h-3.5 w-3.5 text-background" strokeWidth={3} />}
       </button>
-      <span
-        className={`flex-1 text-sm ${quest.done ? "text-muted-foreground line-through" : ""}`}
-      >
+      <span className={`flex-1 text-sm ${quest.done ? "text-muted-foreground line-through" : ""}`}>
         {quest.title}
       </span>
       <span

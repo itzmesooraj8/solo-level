@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useGameStore } from "@/stores/gameStore";
 import { rankTitle, LEVEL_THRESHOLDS } from "@/lib/leveling";
 import { motion } from "framer-motion";
-import { Shield, Zap, Flame, Trophy, Target, X, Download, Trash2, Edit2, Check, Upload } from "lucide-react";
+import {
+  Shield,
+  Zap,
+  Flame,
+  Trophy,
+  Target,
+  X,
+  Download,
+  Trash2,
+  Edit2,
+  Check,
+  Upload,
+} from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
 import { InstallSystemCard } from "@/components/InstallSystemCard";
@@ -10,7 +22,7 @@ import { XPBar } from "@/components/XPBar";
 import { RankBadge } from "@/components/RankBadge";
 import { useState, useRef, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { subDays, format } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export const Route = createFileRoute("/profile")({
@@ -79,29 +91,33 @@ function ProfilePage() {
       try {
         const dump = JSON.parse(event.target?.result as string);
         if (confirm("Importing data will OVERWRITE your current progress. Continue?")) {
-          await db.transaction("rw", [db.player, db.tasks, db.dayTasks, db.dayLogs, db.weeklyQuests, db.promptFires], async () => {
-            if (dump.player) await db.player.put(dump.player);
-            if (dump.tasks) {
-              await db.tasks.clear();
-              await db.tasks.bulkPut(dump.tasks);
-            }
-            if (dump.dayTasks) {
-              await db.dayTasks.clear();
-              await db.dayTasks.bulkPut(dump.dayTasks);
-            }
-            if (dump.dayLogs) {
-              await db.dayLogs.clear();
-              await db.dayLogs.bulkPut(dump.dayLogs);
-            }
-            if (dump.weeklyQuests) {
-              await db.weeklyQuests.clear();
-              await db.weeklyQuests.bulkPut(dump.weeklyQuests);
-            }
-            if (dump.promptFires) {
-              await db.promptFires.clear();
-              await db.promptFires.bulkPut(dump.promptFires);
-            }
-          });
+          await db.transaction(
+            "rw",
+            [db.player, db.tasks, db.dayTasks, db.dayLogs, db.weeklyQuests, db.promptFires],
+            async () => {
+              if (dump.player) await db.player.put(dump.player);
+              if (dump.tasks) {
+                await db.tasks.clear();
+                await db.tasks.bulkPut(dump.tasks);
+              }
+              if (dump.dayTasks) {
+                await db.dayTasks.clear();
+                await db.dayTasks.bulkPut(dump.dayTasks);
+              }
+              if (dump.dayLogs) {
+                await db.dayLogs.clear();
+                await db.dayLogs.bulkPut(dump.dayLogs);
+              }
+              if (dump.weeklyQuests) {
+                await db.weeklyQuests.clear();
+                await db.weeklyQuests.bulkPut(dump.weeklyQuests);
+              }
+              if (dump.promptFires) {
+                await db.promptFires.clear();
+                await db.promptFires.bulkPut(dump.promptFires);
+              }
+            },
+          );
           await load();
           alert("Data imported successfully.");
         }
@@ -188,9 +204,7 @@ function ProfilePage() {
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             30-Day Activity
           </div>
-          <div className="text-[10px] font-bold text-neon-cyan">
-            Last 30 Days
-          </div>
+          <div className="text-[10px] font-bold text-neon-cyan">Last 30 Days</div>
         </div>
         <div className="h-32 w-full">
           <ActivityChart />
@@ -290,12 +304,7 @@ function ProfilePage() {
           </button>
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-neon-emerald/20 border border-neon-emerald/30 px-3 py-2.5 text-sm font-bold text-neon-emerald transition hover:bg-neon-emerald/30">
             <Upload className="h-4 w-4" /> Import local data
-            <input
-              type="file"
-              onChange={importData}
-              accept=".json"
-              className="hidden"
-            />
+            <input type="file" onChange={importData} accept=".json" className="hidden" />
           </label>
           <button
             onClick={wipe}
@@ -312,22 +321,26 @@ function ProfilePage() {
 }
 
 function ActivityChart() {
-  const days = useMemo(() => Array.from({ length: 30 }, (_, i) => {
-    const d = subDays(new Date(), 29 - i);
-    return format(d, "yyyy-MM-dd");
-  }), []);
+  const days = useMemo(
+    () =>
+      Array.from({ length: 30 }, (_, i) => {
+        const d = subDays(new Date(), 29 - i);
+        return format(d, "yyyy-MM-dd");
+      }),
+    [],
+  );
 
   const logs = useLiveQuery(
     () => db.dayLogs.where("dateKey").between(days[0], days[29], true, true).toArray(),
-    []
+    [],
   );
 
   const data = useMemo(() => {
-    const logMap = new Map(logs?.map(l => [l.dateKey, l]));
-    return days.map(k => ({
+    const logMap = new Map(logs?.map((l) => [l.dateKey, l]));
+    return days.map((k) => ({
       date: k,
       xp: logMap.get(k)?.xpEarned ?? 0,
-      status: logMap.get(k)?.status ?? "none"
+      status: logMap.get(k)?.status ?? "none",
     }));
   }, [logs, days]);
 
@@ -336,30 +349,29 @@ function ActivityChart() {
     partial: "var(--neon-amber)",
     failed: "var(--neon-magenta)",
     "in-progress": "var(--neon-cyan)",
-    none: "rgba(255,255,255,0.05)"
+    none: "rgba(255,255,255,0.05)",
   };
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-        <XAxis
-          dataKey="date"
-          hide
-        />
-        <YAxis hide domain={[0, 'auto']} />
+        <XAxis dataKey="date" hide />
+        <YAxis hide domain={[0, "auto"]} />
         <Tooltip
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
                 <div className="glass-strong rounded-xl p-2 text-[10px] border-white/10">
-                  <div className="font-bold">{format(parseISO(payload[0].payload.date), "MMM d")}</div>
+                  <div className="font-bold">
+                    {format(parseISO(payload[0].payload.date), "MMM d")}
+                  </div>
                   <div className="neon-text-cyan">{payload[0].value} XP</div>
                 </div>
               );
             }
             return null;
           }}
-          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+          cursor={{ fill: "rgba(255,255,255,0.05)" }}
         />
         <Bar dataKey="xp" radius={[2, 2, 0, 0]}>
           {data.map((entry, index) => (

@@ -76,7 +76,8 @@ export function LevelUpOverlay() {
                 aria-hidden
                 className="absolute inset-x-0 top-0 h-1 rounded-t-[2.2rem]"
                 style={{
-                  background: "linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta))",
+                  background:
+                    "linear-gradient(90deg, var(--neon-violet), var(--neon-cyan), var(--neon-magenta))",
                 }}
               />
               <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">

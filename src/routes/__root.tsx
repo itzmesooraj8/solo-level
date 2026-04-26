@@ -129,8 +129,8 @@ function RootComponent() {
       e.preventDefault();
       setInstallPrompt(e);
     };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   useEffect(() => {
@@ -159,9 +159,9 @@ function RootComponent() {
         openPrompt(taskId);
       };
 
-      window.addEventListener('hunter:complete', handleComplete);
-      window.addEventListener('hunter:skip', handleSkip);
-      window.addEventListener('hunter:open', handleOpen);
+      window.addEventListener("hunter:complete", handleComplete);
+      window.addEventListener("hunter:skip", handleSkip);
+      window.addEventListener("hunter:open", handleOpen);
 
       await notifications.setActionHandler(async ({ id, action }) => {
         const dt = await db.dayTasks.get(id);
@@ -289,7 +289,9 @@ function PWAInstallBanner({ prompt, onDismiss }: { prompt: any; onDismiss: () =>
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-foreground">Install System</div>
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Add to Home Screen</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            Add to Home Screen
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <button

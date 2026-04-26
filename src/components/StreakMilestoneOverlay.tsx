@@ -2,18 +2,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 const MILESTONE_TITLES: Record<number, string> = {
-  7:   "Week Warrior",
-  14:  "Fortnight Hunter",
-  30:  "Monthly Sovereign",
-  60:  "Iron Will",
+  7: "Week Warrior",
+  14: "Fortnight Hunter",
+  30: "Monthly Sovereign",
+  60: "Iron Will",
   100: "Shadow Monarch",
 };
 
 const MILESTONE_BONUS: Record<number, number> = { 7: 50, 14: 50, 30: 200, 60: 200, 100: 500 };
 
 export function StreakMilestoneOverlay({
-  streak, onDismiss
-}: { streak: number | null; onDismiss: () => void }) {
+  streak,
+  onDismiss,
+}: {
+  streak: number | null;
+  onDismiss: () => void;
+}) {
   if (!streak) return null;
   return (
     <AnimatePresence>
@@ -30,7 +34,7 @@ export function StreakMilestoneOverlay({
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="glass rounded-3xl p-8 text-center max-w-xs mx-4"
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <motion.div
             animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 10, 0] }}
@@ -48,7 +52,9 @@ export function StreakMilestoneOverlay({
           <p className="text-sm text-muted-foreground mb-4">
             +{MILESTONE_BONUS[streak] ?? 50} bonus XP awarded
           </p>
-          <Button className="w-full" onClick={onDismiss}>Continue</Button>
+          <Button className="w-full" onClick={onDismiss}>
+            Continue
+          </Button>
         </motion.div>
       </motion.div>
     </AnimatePresence>

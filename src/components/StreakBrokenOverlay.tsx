@@ -18,7 +18,10 @@ export function StreakBrokenOverlay() {
         >
           <div
             className="absolute inset-0"
-            style={{ backdropFilter: "blur(22px) saturate(130%)", background: "rgba(10,10,18,0.68)" }}
+            style={{
+              backdropFilter: "blur(22px) saturate(130%)",
+              background: "rgba(10,10,18,0.68)",
+            }}
           />
           <motion.div
             initial={{ scale: 0.94, y: 20, opacity: 0 }}

@@ -18,12 +18,8 @@ export function WeeklySparkline() {
   });
 
   const logs = useLiveQuery(
-    () =>
-      db.dayLogs
-        .where("dateKey")
-        .between(days[0], days[6], true, true)
-        .toArray(),
-    []
+    () => db.dayLogs.where("dateKey").between(days[0], days[6], true, true).toArray(),
+    [],
   );
 
   const logMap = new Map(logs?.map((l) => [l.dateKey, l]));
@@ -59,8 +55,10 @@ export function WeeklySparkline() {
                   animate={{ height: `${height}%` }}
                   className="w-full rounded-t-lg transition-colors"
                   style={{
-                    background: log ? `linear-gradient(to top, color-mix(in oklch, ${color} 40%, transparent), ${color})` : "rgba(255,255,255,0.05)",
-                    boxShadow: log ? `0 0 15px -5px ${color}` : "none"
+                    background: log
+                      ? `linear-gradient(to top, color-mix(in oklch, ${color} 40%, transparent), ${color})`
+                      : "rgba(255,255,255,0.05)",
+                    boxShadow: log ? `0 0 15px -5px ${color}` : "none",
                   }}
                 />
               </div>

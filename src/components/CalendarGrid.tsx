@@ -15,12 +15,7 @@ import {
   subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const STATUS_COLOR: Record<string, string> = {
   perfect: "var(--neon-emerald)",
@@ -96,8 +91,13 @@ export function CalendarGrid({ onDayClick }: { onDayClick?: (date: Date) => void
 
         <div className="mt-4 grid grid-cols-4 gap-2 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           {(logs ?? []).slice(0, 4).map((log) => (
-            <div key={log.dateKey} className="rounded-2xl border border-white/5 bg-white/3 px-2 py-2">
-              <div className="text-base font-black tabular-nums text-foreground">{log.xpEarned}</div>
+            <div
+              key={log.dateKey}
+              className="rounded-2xl border border-white/5 bg-white/3 px-2 py-2"
+            >
+              <div className="text-base font-black tabular-nums text-foreground">
+                {log.xpEarned}
+              </div>
               <div className="mt-1">XP</div>
             </div>
           ))}

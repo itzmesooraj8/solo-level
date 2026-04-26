@@ -14,8 +14,8 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [mode, setMode] = useState<"strict" | "flex">("flex");
-  const setHunterName = useGameStore(s => s.setHunterName);
-  const setGameMode = useGameStore(s => s.setMode);
+  const setHunterName = useGameStore((s) => s.setHunterName);
+  const setGameMode = useGameStore((s) => s.setMode);
 
   async function finish() {
     await setHunterName(name || "Hunter");
@@ -23,9 +23,36 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
     await notifications.ensurePermission();
     // Seed 3 starter tasks
     await db.tasks.bulkAdd([
-      { id: `seed_${Math.random().toString(36).slice(2, 6)}`, title: "Morning routine", time: "07:00", durationMin: 30, difficulty: "easy", notify: "smart", recurrence: "daily", createdAt: Date.now() },
-      { id: `seed_${Math.random().toString(36).slice(2, 6)}`, title: "Daily exercise", time: "18:00", durationMin: 45, difficulty: "medium", notify: "strict", recurrence: "daily", createdAt: Date.now() },
-      { id: `seed_${Math.random().toString(36).slice(2, 6)}`, title: "Read / study", time: "21:00", durationMin: 30, difficulty: "easy", notify: "smart", recurrence: "daily", createdAt: Date.now() },
+      {
+        id: `seed_${Math.random().toString(36).slice(2, 6)}`,
+        title: "Morning routine",
+        time: "07:00",
+        durationMin: 30,
+        difficulty: "easy",
+        notify: "smart",
+        recurrence: "daily",
+        createdAt: Date.now(),
+      },
+      {
+        id: `seed_${Math.random().toString(36).slice(2, 6)}`,
+        title: "Daily exercise",
+        time: "18:00",
+        durationMin: 45,
+        difficulty: "medium",
+        notify: "strict",
+        recurrence: "daily",
+        createdAt: Date.now(),
+      },
+      {
+        id: `seed_${Math.random().toString(36).slice(2, 6)}`,
+        title: "Read / study",
+        time: "21:00",
+        durationMin: 30,
+        difficulty: "easy",
+        notify: "smart",
+        recurrence: "daily",
+        createdAt: Date.now(),
+      },
     ]);
     onComplete();
   }
@@ -38,12 +65,14 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
       </div>
       <div className="text-center">
         <h2 className="text-2xl font-black neon-text-violet">Arise, Hunter</h2>
-        <p className="text-sm text-muted-foreground mt-1">The System has chosen you. What is your name?</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          The System has chosen you. What is your name?
+        </p>
       </div>
       <Input
         placeholder="Enter your hunter name"
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
         className="text-center text-lg font-medium border-white/10 bg-white/5"
         maxLength={20}
       />
@@ -61,12 +90,24 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
     <div key="mode" className="flex flex-col gap-4 py-4">
       <div className="text-center">
         <h2 className="text-xl font-black">Choose your path</h2>
-        <p className="text-sm text-muted-foreground mt-1">This affects penalties for missed tasks</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          This affects penalties for missed tasks
+        </p>
       </div>
       {[
-        { id: "flex", label: "Flex Mode", sub: "–5 XP penalty · 3-miss streak reset · Good for beginners", icon: "🌙" },
-        { id: "strict", label: "Strict Mode", sub: "–15 XP penalty · 2-miss streak reset · For disciplined hunters", icon: "⚔️" },
-      ].map(m => (
+        {
+          id: "flex",
+          label: "Flex Mode",
+          sub: "–5 XP penalty · 3-miss streak reset · Good for beginners",
+          icon: "🌙",
+        },
+        {
+          id: "strict",
+          label: "Strict Mode",
+          sub: "–15 XP penalty · 2-miss streak reset · For disciplined hunters",
+          icon: "⚔️",
+        },
+      ].map((m) => (
         <button
           key={m.id}
           onClick={() => setMode(m.id as "strict" | "flex")}
@@ -76,7 +117,9 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
               : "border-white/10 bg-white/3 hover:bg-white/5"
           }`}
         >
-          <div className="text-lg mb-0.5">{m.icon} <span className="font-semibold">{m.label}</span></div>
+          <div className="text-lg mb-0.5">
+            {m.icon} <span className="font-semibold">{m.label}</span>
+          </div>
           <div className="text-xs text-muted-foreground">{m.sub}</div>
         </button>
       ))}
@@ -96,7 +139,9 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
       </div>
       <div className="text-center">
         <h2 className="text-xl font-black">Quest Alerts</h2>
-        <p className="text-sm text-muted-foreground mt-1">The System will notify you when quests begin. Never miss a task again.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          The System will notify you when quests begin. Never miss a task again.
+        </p>
       </div>
       <Button
         className="w-full rounded-xl h-12 text-sm font-bold"
@@ -113,10 +158,16 @@ export function OnboardingSheet({ open, onComplete }: { open: boolean; onComplet
 
   return (
     <Sheet open={open}>
-      <SheetContent side="bottom" className="rounded-t-[2rem] pb-8 max-h-[85vh] overflow-y-auto border-none glass-strong">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-[2rem] pb-8 max-h-[85vh] overflow-y-auto border-none glass-strong"
+      >
         <div className="flex gap-1.5 justify-center mb-6 mt-2">
           {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 rounded-full transition-all ${i <= step ? "w-8 bg-violet-500" : "w-4 bg-white/10"}`} />
+            <div
+              key={i}
+              className={`h-1 rounded-full transition-all ${i <= step ? "w-8 bg-violet-500" : "w-4 bg-white/10"}`}
+            />
           ))}
         </div>
         <AnimatePresence mode="wait">
