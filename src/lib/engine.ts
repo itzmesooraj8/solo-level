@@ -284,6 +284,7 @@ export function startScheduler() {
       await clearStalePromptFires(today);
       await evaluatePastDays();
       await materializeToday();
+      await cleanupStaleWeeklyQuests();
     }
 
     const items = await db.dayTasks.where("dateKey").equals(today).toArray();

@@ -214,7 +214,7 @@ export function TaskEditorSheet() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-auto p-0 z-60 bg-background border-white/10"
+                      className="w-auto p-0 z-[100] bg-background border-white/10"
                       align="start"
                     >
                       <Calendar
