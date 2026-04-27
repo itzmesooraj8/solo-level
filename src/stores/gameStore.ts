@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { db, getOrInitPlayer, type GameMode, type PlayerStats } from "@/lib/db";
 import { levelForXp } from "@/lib/leveling";
 import { getRank, type HunterRank } from "@/lib/ranks";
+import { notifications } from "@/services/notifications";
 
 interface GameState {
   player: PlayerStats | null;
@@ -65,6 +66,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       pendingLevelUp: newLevel > oldLevel ? { from: oldLevel, to: newLevel } : get().pendingLevelUp,
       pendingRankUp: newRank !== oldRank ? newRank : get().pendingRankUp,
     });
+
+    if (delta > 0) {
+      await notifications.vibrate(delta >= 100 ? [20, 40, 20] : 12);
+      await notifications.playSfx(newLevel > oldLevel || newRank !== oldRank ? "rank" : "success");
+    } else if (delta < 0) {
+      await notifications.vibrate([20, 60, 20]);
+      await notifications.playSfx("fail");
+    }
   },
 
   bumpCompleted: async () => {

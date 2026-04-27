@@ -31,9 +31,11 @@ export function TaskEditorSheet() {
   const [reverse, setReverse] = useState(false);
   const [archived, setArchived] = useState(false);
   const [targetDate, setTargetDate] = useState("");
+  const [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly">("none");
   const [calOpen, setCalOpen] = useState(false);
 
   const today = startOfToday();
+  const todayKey = format(today, "yyyy-MM-dd");
 
   useEffect(() => {
     if (editing) {
@@ -45,7 +47,13 @@ export function TaskEditorSheet() {
       setPromptText(editing.promptText ?? "");
       setReverse(!!editing.reverse);
       setArchived(!!editing.archived);
-      setTargetDate(editing.targetDate ?? "");
+      const nextRecurrence = editing.recurrence ?? (editing.targetDate ? "none" : "daily");
+      setRecurrence(nextRecurrence);
+      if (nextRecurrence === "none") {
+        setTargetDate(editing.targetDate ?? todayKey);
+      } else {
+        setTargetDate("");
+      }
     } else if (open) {
       setTitle("");
       setTime("08:00");
@@ -55,12 +63,15 @@ export function TaskEditorSheet() {
       setPromptText("");
       setReverse(false);
       setArchived(false);
-      setTargetDate("");
+      setRecurrence("none");
+      setTargetDate(todayKey);
     }
-  }, [editing, open]);
+  }, [editing, open, todayKey]);
 
   const save = async () => {
     if (!title.trim()) return;
+    const normalizedTargetDate = recurrence === "none" ? targetDate || todayKey : undefined;
+
     const t: Task = {
       id: editing?.id ?? uid(),
       title: title.trim(),
@@ -72,8 +83,8 @@ export function TaskEditorSheet() {
       reverse,
       archived,
       createdAt: editing?.createdAt ?? Date.now(),
-      targetDate: targetDate || undefined,
-      recurrence: targetDate ? "none" : "daily",
+      targetDate: normalizedTargetDate,
+      recurrence,
     };
     await upsertTask(t);
     close();
@@ -92,7 +103,7 @@ export function TaskEditorSheet() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-end justify-center"
+          className="fixed inset-0 z-80 flex items-end justify-center"
         >
           <div
             className="absolute inset-0 bg-black/40"
@@ -150,27 +161,60 @@ export function TaskEditorSheet() {
               </div>
 
               <div>
+                <Label>Repeat</Label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {([
+                    ["none", "One-time"],
+                    ["daily", "Daily"],
+                    ["weekly", "Weekly"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      onClick={() => {
+                        setRecurrence(value);
+                        if (value === "none") {
+                          if (!targetDate) {
+                            setTargetDate(todayKey);
+                          }
+                        } else {
+                          setTargetDate("");
+                        }
+                      }}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                        recurrence === value
+                          ? "border-primary bg-primary/20 text-foreground"
+                          : "border-white/10 text-muted-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  One-time quests run once on the selected date. Daily/weekly quests generate
+                  fresh instances automatically.
+                </div>
+              </div>
+
+              <div>
                 <Label htmlFor="date">Scheduled Date (Optional)</Label>
                 <div className="mt-1 flex gap-2">
                   <Popover open={calOpen} onOpenChange={setCalOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
+                        disabled={recurrence !== "none"}
                         className={cn(
                           "w-full justify-start text-left font-normal border-white/10 bg-white/5",
                           !targetDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {targetDate ? (
-                          format(parseISO(targetDate), "PPP")
-                        ) : (
-                          <span>Recurring Daily</span>
-                        )}
+                        {targetDate ? format(parseISO(targetDate), "PPP") : <span>No date</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-auto p-0 z-[60] bg-background border-white/10"
+                      className="w-auto p-0 z-60 bg-background border-white/10"
                       align="start"
                     >
                       <Calendar
@@ -215,14 +259,14 @@ export function TaskEditorSheet() {
                           }}
                           className="text-xs h-7 text-neon-magenta"
                         >
-                          Daily
+                          No date
                         </Button>
                       </div>
                     </PopoverContent>
                   </Popover>
                 </div>
                 <div className="mt-1 text-[10px] text-muted-foreground">
-                  "Recurring Daily" tasks appear every day. Set a specific date for a one-off quest.
+                  Date is only used for one-time quests.
                 </div>
               </div>
 
@@ -312,7 +356,7 @@ export function TaskEditorSheet() {
                     variant="ghost"
                     size="icon"
                     onClick={remove}
-                    className="text-[var(--neon-magenta)]"
+                    className="text-neon-magenta"
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>

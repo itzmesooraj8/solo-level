@@ -37,6 +37,7 @@ const ACTION_TYPE_ID = "TASK_PROMPT";
 let actionHandler: ((event: NotifyActionEvent) => void | Promise<void>) | null = null;
 let nativeActionListener: PluginListenerHandle | null = null;
 let nativeActionsReady = false;
+let audioContext: AudioContext | null = null;
 
 function isNativePlatform() {
   return Capacitor.isNativePlatform();
@@ -48,6 +49,16 @@ function hashId(id: string) {
     h = (h * 31 + id.charCodeAt(i)) | 0;
   }
   return Math.abs(h) || 1;
+}
+
+function getAudioContext() {
+  if (typeof window === "undefined") return null;
+  const Ctx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctx) return null;
+  if (!audioContext) {
+    audioContext = new Ctx();
+  }
+  return audioContext;
 }
 
 async function ensureNativeActions() {
@@ -245,6 +256,43 @@ export const notifications = {
       } catch {
         // ignore
       }
+    }
+  },
+
+  async playSfx(type: "success" | "fail" | "rank") {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+      const pattern =
+        type === "rank"
+          ? [523, 659, 784]
+          : type === "fail"
+            ? [220, 180]
+            : [660, 880];
+
+      pattern.forEach((freq, i) => {
+        const start = now + i * 0.09;
+        const duration = type === "rank" ? 0.08 : 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type === "fail" ? "square" : "triangle";
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.06, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration + 0.01);
+      });
+    } catch {
+      // ignore feedback failures
     }
   },
 };

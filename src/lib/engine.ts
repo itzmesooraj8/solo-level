@@ -73,7 +73,12 @@ export async function materializeToday() {
   await materializeRecurringTasks();
   const today = dateKey();
   const all = await db.tasks.toArray();
-  const active = all.filter((t) => !t.archived && (!t.targetDate || t.targetDate === today));
+  const active = all.filter((t) => {
+    if (t.archived) return false;
+    // Recurring templates should only produce instances, never appear directly.
+    if (!t.templateId && (t.recurrence === "daily" || t.recurrence === "weekly")) return false;
+    return !t.targetDate || t.targetDate === today;
+  });
   for (const t of active) {
     const id = dayTaskId(today, t.id);
     const exists = await db.dayTasks.get(id);
@@ -140,12 +145,10 @@ export async function resolveTask(dt: DayTask, answer: "yes" | "no") {
       xpDelta = DIFFICULTY_XP[dt.difficulty];
       status = "completed";
       await game.bumpCompleted();
-      notifications.vibrate(20);
     } else {
       xpDelta = penaltyFor(player.mode);
       status = "skipped";
       await game.bumpMissed();
-      notifications.vibrate([20, 60, 20]);
     }
 
     const updated: DayTask = { ...dt, status, xpDelta, resolvedAt: Date.now() };
@@ -323,6 +326,21 @@ export async function upsertTask(t: Task) {
 
   await db.tasks.put(t);
 
+  const isRecurringTemplate =
+    !t.templateId && (t.recurrence === "daily" || t.recurrence === "weekly");
+
+  if (isRecurringTemplate) {
+    const templateDayTaskId = dayTaskId(today, t.id);
+    const existingTemplateDayTask = await db.dayTasks.get(templateDayTaskId);
+    if (existingTemplateDayTask && existingTemplateDayTask.status === "pending") {
+      await db.dayTasks.delete(templateDayTaskId);
+      await notifications.cancelTask(templateDayTaskId);
+    }
+
+    await materializeToday();
+    return;
+  }
+
   // If the task has a specific target date that is NOT today, do not materialize it today.
   // Instead, ensure it doesn't linger in today's pending tasks.
   if (t.targetDate && t.targetDate !== today) {
@@ -386,6 +404,24 @@ export async function upsertTask(t: Task) {
 export async function deleteTask(id: string) {
   const today = dateKey();
   if (isDayLocked(today)) return;
+
+  const source = await db.tasks.get(id);
+  const isRecurringTemplate =
+    !!source && !source.templateId && (source.recurrence === "daily" || source.recurrence === "weekly");
+
+  if (isRecurringTemplate) {
+    const instances = await db.tasks.where("templateId").equals(id).toArray();
+    for (const inst of instances) {
+      await db.tasks.delete(inst.id);
+      const instDayTaskId = dayTaskId(today, inst.id);
+      const instDayTask = await db.dayTasks.get(instDayTaskId);
+      if (instDayTask && instDayTask.status === "pending") {
+        await db.dayTasks.delete(instDayTaskId);
+        await notifications.cancelTask(instDayTaskId);
+      }
+      await db.promptFires.delete(instDayTaskId);
+    }
+  }
 
   await db.tasks.delete(id);
   const dtId = dayTaskId(today, id);

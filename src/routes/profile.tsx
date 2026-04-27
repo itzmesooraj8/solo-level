@@ -14,6 +14,7 @@ import {
   Edit2,
   Check,
   Upload,
+  Swords,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { Switch } from "@/components/ui/switch";
@@ -24,6 +25,15 @@ import { useState, useRef, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { format, parseISO, subDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+
+const SHADOW_ARMY_UNLOCKS = [
+  { name: "Iron", xp: 100 },
+  { name: "Igris", xp: 250 },
+  { name: "Tank", xp: 500 },
+  { name: "Tusk", xp: 1000 },
+  { name: "Beru", xp: 2000 },
+  { name: "Bellion", xp: 5000 },
+] as const;
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -55,6 +65,9 @@ function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!player) return null;
+
+  const unlockedShadows = SHADOW_ARMY_UNLOCKS.filter((unit) => player.xp >= unit.xp);
+  const nextShadow = SHADOW_ARMY_UNLOCKS.find((unit) => player.xp < unit.xp) ?? null;
 
   const saveName = async () => {
     if (tempName.trim()) {
@@ -288,6 +301,50 @@ function ProfilePage() {
             );
           })}
         </ul>
+      </div>
+
+      {/* Shadow army */}
+      <div className="glass rounded-3xl p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Shadow Army
+          </div>
+          <div className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-[10px] font-bold text-neon-cyan">
+            <Swords className="h-3 w-3" />
+            {unlockedShadows.length}/{SHADOW_ARMY_UNLOCKS.length}
+          </div>
+        </div>
+
+        {unlockedShadows.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/3 px-3 py-2 text-xs text-muted-foreground">
+            Keep clearing quests to summon your first shadow.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {unlockedShadows.map((unit) => (
+              <span
+                key={unit.name}
+                className="rounded-full border border-neon-cyan/40 bg-neon-cyan/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neon-cyan"
+              >
+                {unit.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {nextShadow && (
+          <div className="mt-3 rounded-2xl border border-white/10 bg-white/3 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Next summon
+            </div>
+            <div className="mt-1 text-sm font-bold">
+              {nextShadow.name} at {nextShadow.xp} XP
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {Math.max(0, nextShadow.xp - player.xp)} XP remaining
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Data controls */}
