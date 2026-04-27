@@ -13,7 +13,7 @@
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android",
     "build:capacitor:web": "npm run build && node scripts/generate-capacitor-index.mjs",
-    "build:android": "npm run build:capacitor:web && npx cap sync android && npx cap build android --prod"
+    "build:android": "npm run build:capacitor:web && npx cap sync android && cd android && .\\gradlew.bat assembleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
