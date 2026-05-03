@@ -70,8 +70,11 @@ export function TaskEditorSheet() {
 
   const save = async () => {
     if (!title.trim()) return;
-    const normalizedTargetDate = recurrence === "none" ? targetDate || todayKey : undefined;
 
+    // Close immediately for a responsive feel
+    close();
+
+    const normalizedTargetDate = recurrence === "none" ? targetDate || todayKey : undefined;
     const t: Task = {
       id: editing?.id ?? uid(),
       title: title.trim(),
@@ -86,8 +89,9 @@ export function TaskEditorSheet() {
       targetDate: normalizedTargetDate,
       recurrence,
     };
+
+    // Perform DB operation in background
     await upsertTask(t);
-    close();
   };
 
   const remove = async () => {
@@ -149,14 +153,33 @@ export function TaskEditorSheet() {
                 </div>
                 <div>
                   <Label htmlFor="dur">Duration (min)</Label>
+                <div className="mt-1 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {[15, 30, 45, 60, 90, 120].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setDuration(m)}
+                        className={`rounded-lg border px-2 py-1 text-[10px] font-bold transition ${
+                          duration === m
+                            ? "border-neon-cyan bg-neon-cyan/20 text-neon-cyan"
+                            : "border-white/10 text-muted-foreground hover:bg-white/5"
+                        }`}
+                      >
+                        {m >= 60 ? `${m / 60}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`}
+                      </button>
+                    ))}
+                  </div>
                   <Input
                     id="dur"
                     type="number"
-                    min={5}
-                    max={480}
+                    min={1}
+                    max={1440}
                     value={duration}
-                    onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
+                    onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+                    className="bg-white/5 border-white/10 h-9 text-sm"
                   />
+                </div>
                 </div>
               </div>
 
