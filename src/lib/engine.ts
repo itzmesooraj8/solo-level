@@ -15,9 +15,9 @@ export function dayTaskId(dKey: string, taskId: string) {
   return `${dKey}-${taskId}`;
 }
 
-/** Returns true if a day's tasks are locked. Disabled by user request. */
+/** Returns true if a day's tasks are locked (day has started). */
 export function isDayLocked(dKey: string) {
-  return false;
+  return dKey <= dateKey();
 }
 
 /** Materialize recurring tasks into one-off tasks for today. */
@@ -190,6 +190,20 @@ async function cleanupStaleWeeklyQuests() {
   const currentWeek = weekKey();
   const all = await db.weeklyQuests.toArray();
   const stale = all.filter((q) => q.weekKey !== currentWeek);
+
+  // Snapshot stale weeks before clearing
+  const staleWeeks = Array.from(new Set(stale.map((q) => q.weekKey)));
+  for (const wKey of staleWeeks) {
+    const existingLog = await db.weeklyLogs.get(wKey);
+    if (!existingLog) {
+      const weekQuests = stale.filter((q) => q.weekKey === wKey);
+      const completed = weekQuests.filter((q) => q.done).length;
+      const total = weekQuests.length;
+      const xpEarned = weekQuests.reduce((acc, q) => acc + (q.done ? DIFFICULTY_XP[q.difficulty] : 0), 0);
+      await db.weeklyLogs.put({ weekKey: wKey, completed, total, xpEarned });
+    }
+  }
+
   for (const q of stale) {
     await db.weeklyQuests.delete(q.id);
   }

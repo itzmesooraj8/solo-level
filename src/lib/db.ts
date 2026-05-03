@@ -56,6 +56,13 @@ export interface WeeklyQuest {
   done: boolean;
 }
 
+export interface WeeklyLog {
+  weekKey: string;
+  completed: number;
+  total: number;
+  xpEarned: number;
+}
+
 export interface PromptFire {
   id: string;
   dateKey: string;
@@ -80,6 +87,7 @@ class HunterDB extends Dexie {
   dayTasks!: Table<DayTask, string>;
   dayLogs!: Table<DayLog, string>;
   weeklyQuests!: Table<WeeklyQuest, string>;
+  weeklyLogs!: Table<WeeklyLog, string>;
   promptFires!: Table<PromptFire, string>;
   player!: Table<PlayerStats, string>;
 
@@ -100,11 +108,12 @@ class HunterDB extends Dexie {
       promptFires: "id, dateKey, firedAt",
       player: "id",
     });
-    this.version(3).stores({
+    this.version(4).stores({
       tasks: "id, createdAt, archived, recurrence, templateId, [templateId+targetDate]",
       dayTasks: "id, dateKey, taskId, status, time",
       dayLogs: "dateKey, status",
       weeklyQuests: "id, weekKey, dayIndex",
+      weeklyLogs: "weekKey",
       promptFires: "id, dateKey, firedAt",
       player: "id",
     });
