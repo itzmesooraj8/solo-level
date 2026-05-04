@@ -117,6 +117,15 @@ class HunterDB extends Dexie {
       promptFires: "id, dateKey, firedAt",
       player: "id",
     });
+    this.version(5).stores({
+      tasks: "id, createdAt, archived, recurrence, templateId, targetDate",
+      dayTasks: "id, dateKey, taskId, status, time",
+      dayLogs: "dateKey, status",
+      weeklyQuests: "id, weekKey, dayIndex",
+      weeklyLogs: "weekKey",
+      promptFires: "id, dateKey, firedAt",
+      player: "id",
+    });
   }
 }
 

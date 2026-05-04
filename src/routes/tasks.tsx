@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Task } from "@/lib/db";
 import { usePromptStore } from "@/stores/promptStore";
-import { Plus, Archive } from "lucide-react";
+import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { upsertTask } from "@/lib/engine";
+import { upsertTask, isDayLocked } from "@/lib/engine";
+import { dateKey } from "@/lib/dateKeys";
 import { TaskCard } from "@/components/TaskCard";
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -70,9 +71,14 @@ function TasksPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence mode="popLayout">
-            {filteredTasks?.map((t) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <AnimatePresence mode="popLayout">
+          {filteredTasks?.map((t) => {
+            const isTemplate =
+              !t.templateId && (t.recurrence === "daily" || t.recurrence === "weekly");
+            const isLocked = !isTemplate && isDayLocked(t.targetDate || dateKey());
+
+            return (
               <motion.div
                 key={t.id}
                 layout
@@ -83,17 +89,21 @@ function TasksPage() {
                 <TaskCard
                   task={t}
                   mode="library"
+                  locked={isLocked}
                   onEdit={() => {
-                    openAdd(t);
+                    if (!isLocked) openAdd(t);
                   }}
                   onArchive={async () => {
-                    await upsertTask({ ...t, archived: !t.archived });
+                    if (!isLocked) {
+                      await upsertTask({ ...t, archived: !t.archived });
+                    }
                   }}
                 />
               </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
       )}
 
       <motion.button

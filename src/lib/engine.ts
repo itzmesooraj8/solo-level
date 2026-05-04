@@ -17,7 +17,8 @@ export function dayTaskId(dKey: string, taskId: string) {
 
 /** Returns true if a day's tasks are locked (day has started). */
 export function isDayLocked(dKey: string) {
-  return dKey <= dateKey();
+  const today = dateKey();
+  return dKey < today;
 }
 
 /** Materialize recurring tasks into one-off tasks for today. */
@@ -30,7 +31,11 @@ export async function materializeRecurringTasks() {
   const templates = allRecurring.filter((t) => !t.templateId);
 
   for (const t of templates) {
-    const existing = await db.tasks.where("[templateId+targetDate]").equals([t.id, today]).count();
+    const existing = await db.tasks
+      .where("templateId")
+      .equals(t.id)
+      .filter((task) => task.targetDate === today)
+      .count();
     if (existing > 0) continue;
 
     const baseDate = t.targetDate || format(new Date(t.createdAt), "yyyy-MM-dd");
@@ -337,12 +342,23 @@ export function stopScheduler() {
 
 export async function upsertTask(t: Task) {
   const today = dateKey();
-  if (isDayLocked(today)) return;
+  const target = t.targetDate || today;
 
-  await db.tasks.put(t);
+  const isRecurringTemplate = !t.templateId && (t.recurrence === "daily" || t.recurrence === "weekly");
 
-  const isRecurringTemplate =
-    !t.templateId && (t.recurrence === "daily" || t.recurrence === "weekly");
+  // Allow creation/edit of today's tasks and future tasks.
+  // Only lock if the target date is strictly in the past.
+  if (!isRecurringTemplate && isDayLocked(target)) {
+    console.warn("Task is locked:", target);
+    return;
+  }
+
+  try {
+    await db.tasks.put(t);
+  } catch (err) {
+    console.error("Failed to save task:", err);
+    throw err;
+  }
 
   if (isRecurringTemplate) {
     const templateDayTaskId = dayTaskId(today, t.id);
@@ -417,12 +433,14 @@ export async function upsertTask(t: Task) {
 }
 
 export async function deleteTask(id: string) {
-  const today = dateKey();
-  if (isDayLocked(today)) return;
-
   const source = await db.tasks.get(id);
-  const isRecurringTemplate =
-    !!source && !source.templateId && (source.recurrence === "daily" || source.recurrence === "weekly");
+  if (!source) return;
+
+  const today = dateKey();
+  const target = source.targetDate || today;
+  const isRecurringTemplate = !source.templateId && (source.recurrence === "daily" || source.recurrence === "weekly");
+
+  if (!isRecurringTemplate && isDayLocked(target)) return;
 
   if (isRecurringTemplate) {
     const instances = await db.tasks.where("templateId").equals(id).toArray();

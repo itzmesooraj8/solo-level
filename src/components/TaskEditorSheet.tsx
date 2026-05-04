@@ -71,9 +71,6 @@ export function TaskEditorSheet() {
   const save = async () => {
     if (!title.trim()) return;
 
-    // Close immediately for a responsive feel
-    close();
-
     const normalizedTargetDate = recurrence === "none" ? targetDate || todayKey : undefined;
     const t: Task = {
       id: editing?.id ?? uid(),
@@ -90,8 +87,14 @@ export function TaskEditorSheet() {
       recurrence,
     };
 
-    // Perform DB operation in background
-    await upsertTask(t);
+    try {
+      await upsertTask(t);
+      // Close only after successful save
+      close();
+    } catch (err) {
+      console.error("Failed to create task:", err);
+      alert("Failed to create task. This is likely a database issue. Try clearing app data if it persists.");
+    }
   };
 
   const remove = async () => {
